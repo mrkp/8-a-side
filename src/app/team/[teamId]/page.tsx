@@ -5,15 +5,16 @@ import { PlayerCard } from "@/components/team/player-card"
 export default async function TeamPage({
   params
 }: {
-  params: { teamId: string }
+  params: Promise<{ teamId: string }>
 }) {
+  const resolvedParams = await params
   const supabase = await createClient()
 
   // Get team
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("id", params.teamId)
+    .eq("id", resolvedParams.teamId)
     .single()
 
   if (!team) redirect("/")
@@ -22,8 +23,8 @@ export default async function TeamPage({
   const { data: players } = await supabase
     .from("players")
     .select("*")
-    .eq("team_id", params.teamId)
-    .order("rank", { ascending: true, nullsLast: true })
+    .eq("team_id", resolvedParams.teamId)
+    .order("rank", { ascending: true })
     .order("name", { ascending: true })
 
   const rankOrder = { 'A': 0, 'B': 1, 'C': 2 }
@@ -48,7 +49,7 @@ export default async function TeamPage({
           <PlayerCard
             key={player.id}
             player={player}
-            teamId={params.teamId}
+            teamId={resolvedParams.teamId}
             editable
           />
         ))}

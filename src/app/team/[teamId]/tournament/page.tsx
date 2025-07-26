@@ -4,7 +4,7 @@ import { TeamOverview } from "@/components/tournament/team-overview"
 export default async function TeamTournamentPage({
   params
 }: {
-  params: { teamId: string }
+  params: Promise<{ teamId: string }>
 }) {
   const supabase = await createClient()
 

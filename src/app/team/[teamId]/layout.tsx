@@ -8,15 +8,16 @@ export default async function TeamLayout({
   params
 }: {
   children: React.ReactNode
-  params: { teamId: string }
+  params: Promise<{ teamId: string }>
 }) {
+  const resolvedParams = await params
   const supabase = await createClient()
   
   // Get team data
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("id", params.teamId)
+    .eq("id", resolvedParams.teamId)
     .single()
 
   if (!team) {
@@ -31,19 +32,19 @@ export default async function TeamLayout({
             <h1 className="text-xl font-bold">{team.name}</h1>
             <nav className="flex items-center gap-4">
               <Link 
-                href={`/team/${params.teamId}`} 
+                href={`/team/${resolvedParams.teamId}`} 
                 className="text-sm font-medium hover:text-primary"
               >
                 My Team
               </Link>
               <Link 
-                href={`/team/${params.teamId}/trades`} 
+                href={`/team/${resolvedParams.teamId}/trades`} 
                 className="text-sm font-medium hover:text-primary"
               >
                 Trades
               </Link>
               <Link 
-                href={`/team/${params.teamId}/tournament`} 
+                href={`/team/${resolvedParams.teamId}/tournament`} 
                 className="text-sm font-medium hover:text-primary"
               >
                 Tournament
@@ -59,7 +60,7 @@ export default async function TeamLayout({
         </div>
       </header>
       <main className="container py-6">
-        <RealtimeTrades teamId={params.teamId} />
+        <RealtimeTrades teamId={resolvedParams.teamId} />
         {children}
       </main>
     </div>

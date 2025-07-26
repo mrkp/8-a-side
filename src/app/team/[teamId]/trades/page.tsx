@@ -7,15 +7,16 @@ import { TradeList } from "@/components/trades/trade-list"
 export default async function TeamTradesPage({
   params
 }: {
-  params: { teamId: string }
+  params: Promise<{ teamId: string }>
 }) {
+  const resolvedParams = await params
   const supabase = await createClient()
 
   // Get team
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("id", params.teamId)
+    .eq("id", resolvedParams.teamId)
     .single()
 
   if (!team) redirect("/")
@@ -24,7 +25,7 @@ export default async function TeamTradesPage({
   const { data: otherTeams } = await supabase
     .from("teams")
     .select("*")
-    .neq("id", params.teamId)
+    .neq("id", resolvedParams.teamId)
     .order("name")
 
   // Get pending trades involving this team
@@ -39,7 +40,7 @@ export default async function TeamTradesPage({
         player:players(*)
       )
     `)
-    .or(`from_team_id.eq.${params.teamId},to_team_id.eq.${params.teamId}`)
+    .or(`from_team_id.eq.${resolvedParams.teamId},to_team_id.eq.${resolvedParams.teamId}`)
     .eq("status", "pending")
     .order("created_at", { ascending: false })
 
@@ -53,7 +54,7 @@ export default async function TeamTradesPage({
           </p>
         </div>
         <Link 
-          href={`/team/${params.teamId}/trades/history`}
+          href={`/team/${resolvedParams.teamId}/trades/history`}
           className="text-sm text-primary hover:underline"
         >
           View Trade History →
@@ -64,7 +65,7 @@ export default async function TeamTradesPage({
         <div>
           <h3 className="text-xl font-semibold mb-4">Propose New Trade</h3>
           <TradeProposal 
-            teamId={params.teamId} 
+            teamId={resolvedParams.teamId} 
             otherTeams={otherTeams || []}
           />
         </div>
@@ -73,7 +74,7 @@ export default async function TeamTradesPage({
           <h3 className="text-xl font-semibold mb-4">Pending Trades</h3>
           <TradeList 
             trades={trades || []} 
-            currentTeamId={params.teamId}
+            currentTeamId={resolvedParams.teamId}
           />
         </div>
       </div>

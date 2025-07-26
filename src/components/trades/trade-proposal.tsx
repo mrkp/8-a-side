@@ -32,7 +32,7 @@ export function TradeProposal({ teamId, otherTeams }: TradeProposalProps) {
         .from("players")
         .select("*")
         .eq("team_id", teamId)
-        .order("rank", { ascending: true, nullsLast: true })
+        .order("rank", { ascending: true })
         .order("name")
 
       // Load target team's players
@@ -40,7 +40,7 @@ export function TradeProposal({ teamId, otherTeams }: TradeProposalProps) {
         .from("players")
         .select("*")
         .eq("team_id", targetTeamId)
-        .order("rank", { ascending: true, nullsLast: true })
+        .order("rank", { ascending: true })
         .order("name")
 
       setMyPlayers(myData || [])

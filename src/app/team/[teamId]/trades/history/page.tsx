@@ -5,15 +5,16 @@ import Link from "next/link"
 export default async function TeamTradeHistoryPage({
   params
 }: {
-  params: { teamId: string }
+  params: Promise<{ teamId: string }>
 }) {
+  const resolvedParams = await params
   const supabase = await createClient()
 
   // Get team
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("id", params.teamId)
+    .eq("id", resolvedParams.teamId)
     .single()
 
   if (!team) redirect("/")
@@ -30,7 +31,7 @@ export default async function TeamTradeHistoryPage({
         player:players(*)
       )
     `)
-    .or(`from_team_id.eq.${params.teamId},to_team_id.eq.${params.teamId}`)
+    .or(`from_team_id.eq.${resolvedParams.teamId},to_team_id.eq.${resolvedParams.teamId}`)
     .in("status", ["accepted", "declined"])
     .order("responded_at", { ascending: false })
 
@@ -44,7 +45,7 @@ export default async function TeamTradeHistoryPage({
           </p>
         </div>
         <Link 
-          href={`/team/${params.teamId}/trades`}
+          href={`/team/${resolvedParams.teamId}/trades`}
           className="text-sm text-primary hover:underline"
         >
           ← Back to Trades
@@ -58,9 +59,9 @@ export default async function TeamTradeHistoryPage({
       ) : (
         <div className="space-y-4">
           {trades.map(trade => {
-            const isMyOffer = trade.from_team_id === params.teamId
-            const fromPlayers = trade.trade_players?.filter(tp => tp.direction === 'from') || []
-            const toPlayers = trade.trade_players?.filter(tp => tp.direction === 'to') || []
+            const isMyOffer = trade.from_team_id === resolvedParams.teamId
+            const fromPlayers = trade.trade_players?.filter((tp: any) => tp.direction === 'from') || []
+            const toPlayers = trade.trade_players?.filter((tp: any) => tp.direction === 'to') || []
 
             return (
               <div key={trade.id} className="border rounded-lg p-4 space-y-3">
@@ -90,7 +91,7 @@ export default async function TeamTradeHistoryPage({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="font-medium mb-1">Gave:</p>
-                    {fromPlayers.map(tp => (
+                    {fromPlayers.map((tp: any) => (
                       <p key={tp.player_id}>
                         {tp.player?.name}
                         {tp.player?.rank && ` (${tp.player.rank})`}
@@ -99,7 +100,7 @@ export default async function TeamTradeHistoryPage({
                   </div>
                   <div>
                     <p className="font-medium mb-1">Received:</p>
-                    {toPlayers.map(tp => (
+                    {toPlayers.map((tp: any) => (
                       <p key={tp.player_id}>
                         {tp.player?.name}
                         {tp.player?.rank && ` (${tp.player.rank})`}
