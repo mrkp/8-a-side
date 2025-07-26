@@ -73,6 +73,20 @@ export default async function Home() {
               <span className="block text-3xl mt-2 text-muted-foreground">Football Tournament</span>
             </h1>
             
+            <a 
+              href="https://wam.now" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-muted/50 rounded-full border border-border/50 hover:bg-muted/70 transition-colors"
+            >
+              <span className="text-sm text-muted-foreground">Powered by</span>
+              <img 
+                src="/wam-logo.svg" 
+                alt="WAM!" 
+                className="h-5 w-auto"
+              />
+            </a>
+            
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Follow the official QPCC 8-A-SIDE Football Tournament. Track team standings, 
               player rankings, and trading activity as sponsor teams compete for glory.
@@ -228,15 +242,28 @@ export default async function Home() {
       {/* Footer */}
       <footer className="border-t py-8 mt-16">
         <div className="container mx-auto px-4">
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-muted-foreground space-y-4">
             <p>© 2024 QPCC 8-A-SIDE Football Tournament. All rights reserved.</p>
-            <p className="mt-2">
+            <p>
               <Link href="/admin" className="hover:text-foreground">Team Management</Link>
               {" • "}
               <Link href="/tournament" className="hover:text-foreground">Full Tournament View</Link>
               {" • "}
               <Link href="/init-db" className="hover:text-foreground">Database</Link>
             </p>
+            <a 
+              href="https://wam.now" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 pt-4 hover:opacity-80 transition-opacity"
+            >
+              <span>Powered by</span>
+              <img 
+                src="/wam-logo.svg" 
+                alt="WAM!" 
+                className="h-6 w-auto"
+              />
+            </a>
           </div>
         </div>
       </footer>

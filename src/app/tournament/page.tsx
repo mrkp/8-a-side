@@ -68,12 +68,27 @@ export default async function TournamentPage() {
               <h1 className="text-xl font-bold">Tournament Dashboard</h1>
             </div>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Team Selection
-            </Link>
-          </Button>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://wam.now" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-full border border-border/50 hover:bg-muted/70 transition-colors"
+            >
+              <span className="text-xs text-muted-foreground">Powered by</span>
+              <img 
+                src="/wam-logo.svg" 
+                alt="WAM!" 
+                className="h-4 w-auto"
+              />
+            </a>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/admin">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Team Selection
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
       

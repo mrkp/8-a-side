@@ -46,6 +46,15 @@ export default async function AdminPage() {
             </Badge>
           </div>
           
+          <div className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-muted/50 rounded-full border border-border/50">
+            <span className="text-xs text-muted-foreground">Powered by</span>
+            <img 
+              src="/wam-logo.svg" 
+              alt="WAM!" 
+              className="h-4 w-auto"
+            />
+          </div>
+          
           <h1 className="text-5xl font-bold tracking-tight">
             <span className="text-primary">QPCC</span> Draft & Trade
             <span className="text-primary"> Hub</span>
