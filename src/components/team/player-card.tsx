@@ -92,7 +92,9 @@ export function PlayerCard({
           <h3 className="font-medium flex items-center gap-2">
             {player.name}
             {player.is_professional && (
-              <Trophy className="h-4 w-4 text-yellow-600" title="Professional Player" />
+              <span title="Professional Player">
+                <Trophy className="h-4 w-4 text-yellow-600" />
+              </span>
             )}
           </h3>
           {player.rank && (

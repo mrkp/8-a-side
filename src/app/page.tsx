@@ -177,7 +177,9 @@ export default async function Home() {
                           <div key={player.id} className="flex items-center justify-between py-1">
                             <span className="text-sm font-medium flex items-center gap-1">
                               {player.is_professional && (
-                                <Trophy className="w-3 h-3 text-yellow-500" title="Professional Player" />
+                                <span title="Professional Player">
+                                  <Trophy className="w-3 h-3 text-yellow-500" />
+                                </span>
                               )}
                               {player.name}
                             </span>

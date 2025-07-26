@@ -100,7 +100,9 @@ export function TeamOverview({ team }: TeamOverviewProps) {
               <div key={player.id} className="flex items-center justify-between text-sm py-1 px-2 rounded hover:bg-muted/50">
                 <span className="font-medium flex items-center gap-1">
                   {player.is_professional && (
-                    <Trophy className="w-3 h-3 text-yellow-500" title="Professional Player" />
+                    <span title="Professional Player">
+                      <Trophy className="w-3 h-3 text-yellow-500" />
+                    </span>
                   )}
                   {player.name}
                 </span>
