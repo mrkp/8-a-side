@@ -64,70 +64,27 @@ ALTER TABLE trades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trade_players ENABLE ROW LEVEL SECURITY;
 ALTER TABLE trade_history ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies
+-- RLS Policies (Open access since we're not using authentication)
 
--- Teams: Public read access
-CREATE POLICY "Teams are viewable by everyone" ON teams
-  FOR SELECT USING (true);
+-- Teams: Public access
+CREATE POLICY "Teams are publicly accessible" ON teams
+  FOR ALL USING (true);
 
--- Players: Public read access
-CREATE POLICY "Players are viewable by everyone" ON players
-  FOR SELECT USING (true);
+-- Players: Public access
+CREATE POLICY "Players are publicly accessible" ON players
+  FOR ALL USING (true);
 
--- Players: Teams can update their own players' ranks
-CREATE POLICY "Teams can update own players ranks" ON players
-  FOR UPDATE 
-  USING (auth.uid() = team_id)
-  WITH CHECK (auth.uid() = team_id AND team_id = OLD.team_id);
+-- Trades: Public access
+CREATE POLICY "Trades are publicly accessible" ON trades
+  FOR ALL USING (true);
 
--- Trades: Teams can view trades involving them
-CREATE POLICY "Teams can view trades involving them" ON trades
-  FOR SELECT 
-  USING (auth.uid() IN (from_team_id, to_team_id));
+-- Trade players: Public access
+CREATE POLICY "Trade players are publicly accessible" ON trade_players
+  FOR ALL USING (true);
 
--- Trades: Teams can create trades from themselves
-CREATE POLICY "Teams can create trades" ON trades
-  FOR INSERT 
-  WITH CHECK (auth.uid() = from_team_id);
-
--- Trades: Teams can respond to trades sent to them
-CREATE POLICY "Teams can respond to trades" ON trades
-  FOR UPDATE 
-  USING (auth.uid() = to_team_id AND status = 'pending')
-  WITH CHECK (auth.uid() = to_team_id);
-
--- Trade players: View if you can view the trade
-CREATE POLICY "View trade players" ON trade_players
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM trades 
-      WHERE trades.id = trade_players.trade_id 
-      AND auth.uid() IN (trades.from_team_id, trades.to_team_id)
-    )
-  );
-
--- Trade players: Insert if you can create the trade
-CREATE POLICY "Insert trade players" ON trade_players
-  FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM trades 
-      WHERE trades.id = trade_players.trade_id 
-      AND auth.uid() = trades.from_team_id
-    )
-  );
-
--- Trade history: View if involved in trade
-CREATE POLICY "View trade history" ON trade_history
-  FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM trades 
-      WHERE trades.id = trade_history.trade_id 
-      AND auth.uid() IN (trades.from_team_id, trades.to_team_id)
-    )
-  );
+-- Trade history: Public access
+CREATE POLICY "Trade history is publicly accessible" ON trade_history
+  FOR ALL USING (true);
 
 -- Functions
 
