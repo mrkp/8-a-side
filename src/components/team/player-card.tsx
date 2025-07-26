@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import type { Player } from "@/lib/types/database"
 import { cn } from "@/lib/utils"
-import { Trophy } from "lucide-react"
+import { Trophy, Shield } from "lucide-react"
 
 interface PlayerCardProps {
   player: Player
@@ -68,6 +68,36 @@ export function PlayerCard({
     }
   }
 
+  const handleCaptainToggle = async () => {
+    if (!editable || player.team_id !== teamId) return
+    
+    setUpdating(true)
+    try {
+      // If making this player captain, first remove captain status from others
+      if (!player.is_captain) {
+        await supabase
+          .from("players")
+          .update({ is_captain: false })
+          .eq("team_id", teamId)
+          .eq("is_captain", true)
+      }
+      
+      // Toggle captain status for this player
+      const { error } = await supabase
+        .from("players")
+        .update({ is_captain: !player.is_captain })
+        .eq("id", player.id)
+
+      if (error) throw error
+      
+      router.refresh()
+    } catch (error) {
+      console.error("Error updating captain status:", error)
+    } finally {
+      setUpdating(false)
+    }
+  }
+
   const getRankColor = (rank: string | null) => {
     switch (rank) {
       case 'A': return 'bg-red-100 border-red-400 text-red-900'
@@ -91,6 +121,14 @@ export function PlayerCard({
         <div>
           <h3 className="font-medium flex items-center gap-2">
             {player.name}
+            {player.is_captain && (
+              <span 
+                title="Team Captain" 
+                className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-bold"
+              >
+                C
+              </span>
+            )}
             {player.is_professional && (
               <span title="Professional Player">
                 <Trophy className="h-4 w-4 text-yellow-600" />
@@ -104,6 +142,23 @@ export function PlayerCard({
         
         {editable && player.team_id === teamId && (
           <div className="flex items-center gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCaptainToggle()
+              }}
+              disabled={updating}
+              className={cn(
+                "p-1.5 rounded transition-all disabled:opacity-50",
+                player.is_captain 
+                  ? "bg-blue-600 text-white hover:bg-blue-700" 
+                  : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+              )}
+              title={player.is_captain ? "Remove captain status" : "Make team captain"}
+            >
+              <Shield className="h-4 w-4" />
+            </button>
+            
             <button
               onClick={(e) => {
                 e.stopPropagation()

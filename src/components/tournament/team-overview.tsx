@@ -99,12 +99,20 @@ export function TeamOverview({ team }: TeamOverviewProps) {
             team.players.map(player => (
               <div key={player.id} className="flex items-center justify-between text-sm py-1 px-2 rounded hover:bg-muted/50">
                 <span className="font-medium flex items-center gap-1">
+                  {player.name}
+                  {player.is_captain && (
+                    <span 
+                      title="Team Captain" 
+                      className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold ml-1"
+                    >
+                      C
+                    </span>
+                  )}
                   {player.is_professional && (
                     <span title="Professional Player">
                       <Trophy className="w-3 h-3 text-yellow-500" />
                     </span>
                   )}
-                  {player.name}
                 </span>
                 {getRankBadge(player.rank)}
               </div>

@@ -176,12 +176,20 @@ export default async function Home() {
                         team.players.map((player: any) => (
                           <div key={player.id} className="flex items-center justify-between py-1">
                             <span className="text-sm font-medium flex items-center gap-1">
+                              {player.name}
+                              {player.is_captain && (
+                                <span 
+                                  title="Team Captain" 
+                                  className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold ml-1"
+                                >
+                                  C
+                                </span>
+                              )}
                               {player.is_professional && (
                                 <span title="Professional Player">
                                   <Trophy className="w-3 h-3 text-yellow-500" />
                                 </span>
                               )}
-                              {player.name}
                             </span>
                             {player.rank ? (
                               player.rank === 'A' ? (
