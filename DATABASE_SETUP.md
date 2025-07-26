@@ -10,6 +10,8 @@
 
 You should see a success message indicating all tables, indexes, policies, and functions were created.
 
+**Note**: The schema uses PostgreSQL's native UUID type for all entity IDs. UUIDs are auto-generated for all tables.
+
 ## Step 2: Initialize Data
 
 1. Make sure your development server is running:
@@ -36,9 +38,10 @@ You should see a success message indicating all tables, indexes, policies, and f
 
 1. Go to http://localhost:3000
 2. You should see all 8 teams listed
-3. Click on any team to view their roster
-4. Try ranking some players (A, B, or C)
-5. Try proposing a trade to another team
+3. Click "View Tournament Overview →" to see all teams and players
+4. Click on any team to view and manage their roster
+5. Try ranking some players (A, B, or C)
+6. Try proposing a trade to another team
 
 ## Teams and Initial Rosters
 

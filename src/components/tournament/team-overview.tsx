@@ -1,3 +1,9 @@
+import Link from "next/link"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Users, ExternalLink, Star, Medal, Award } from "lucide-react"
 import type { Team, Player } from "@/lib/types/database"
 
 interface TeamOverviewProps {
@@ -8,46 +14,116 @@ export function TeamOverview({ team }: TeamOverviewProps) {
   const getRankBadge = (rank: string | null) => {
     switch (rank) {
       case 'A':
-        return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">A</span>
+        return (
+          <Badge variant="destructive" className="text-xs">
+            <Star className="w-3 h-3 mr-1" />
+            A
+          </Badge>
+        )
       case 'B':
-        return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">B</span>
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+            <Medal className="w-3 h-3 mr-1" />
+            B
+          </Badge>
+        )
       case 'C':
-        return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">C</span>
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+            <Award className="w-3 h-3 mr-1" />
+            C
+          </Badge>
+        )
       default:
-        return null
+        return (
+          <Badge variant="outline" className="text-xs">
+            Unranked
+          </Badge>
+        )
     }
   }
 
   const rankCounts = team.players.reduce((acc, player) => {
     if (player.rank) {
       acc[player.rank] = (acc[player.rank] || 0) + 1
+    } else {
+      acc.unranked = (acc.unranked || 0) + 1
     }
     return acc
   }, {} as Record<string, number>)
 
   return (
-    <div className="border rounded-lg p-4 space-y-3">
-      <div className="flex justify-between items-start">
-        <h3 className="text-lg font-semibold">{team.name}</h3>
-        <div className="flex gap-2 text-xs">
-          {rankCounts.A && <span className="text-red-600 font-medium">A: {rankCounts.A}</span>}
-          {rankCounts.B && <span className="text-yellow-600 font-medium">B: {rankCounts.B}</span>}
-          {rankCounts.C && <span className="text-green-600 font-medium">C: {rankCounts.C}</span>}
+    <Card className="group hover:shadow-lg transition-all duration-300 hover:border-primary/50">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="h-5 w-5 text-muted-foreground" />
+            {team.name}
+          </CardTitle>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/team/${team.id}`}>
+              <ExternalLink className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
-      </div>
+        
+        {/* Rank Summary */}
+        <div className="flex gap-2 flex-wrap">
+          {rankCounts.A && (
+            <Badge variant="destructive" className="text-xs">
+              A: {rankCounts.A}
+            </Badge>
+          )}
+          {rankCounts.B && (
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+              B: {rankCounts.B}
+            </Badge>
+          )}
+          {rankCounts.C && (
+            <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+              C: {rankCounts.C}
+            </Badge>
+          )}
+          {rankCounts.unranked && (
+            <Badge variant="outline" className="text-xs">
+              Unranked: {rankCounts.unranked}
+            </Badge>
+          )}
+        </div>
+      </CardHeader>
       
-      <div className="space-y-1">
-        {team.players.map(player => (
-          <div key={player.id} className="flex items-center justify-between text-sm">
-            <span>{player.name}</span>
-            {getRankBadge(player.rank)}
-          </div>
-        ))}
-      </div>
-      
-      <div className="pt-2 border-t text-xs text-muted-foreground">
-        Total: {team.players.length} players
-      </div>
-    </div>
+      <CardContent className="pt-0">
+        {/* Player List */}
+        <div className="space-y-2 max-h-60 overflow-y-auto">
+          {team.players.length > 0 ? (
+            team.players.map(player => (
+              <div key={player.id} className="flex items-center justify-between text-sm py-1 px-2 rounded hover:bg-muted/50">
+                <span className="font-medium">{player.name}</span>
+                {getRankBadge(player.rank)}
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-muted-foreground py-4">
+              No players assigned
+            </div>
+          )}
+        </div>
+        
+        <Separator className="my-3" />
+        
+        {/* Team Summary */}
+        <div className="flex justify-between items-center text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            {team.players.length} players total
+          </span>
+          <Button variant="ghost" size="sm" asChild className="h-8 text-xs">
+            <Link href={`/team/${team.id}`}>
+              Manage →
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

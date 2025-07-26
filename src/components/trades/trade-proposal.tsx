@@ -4,6 +4,16 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import { PlayerCard } from "@/components/team/player-card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ArrowRightLeft, Users, MessageSquare, Send, Loader2, AlertCircle } from "lucide-react"
 import type { Team, Player } from "@/lib/types/database"
 
 interface TradeProposalProps {
@@ -50,8 +60,7 @@ export function TradeProposal({ teamId, otherTeams }: TradeProposalProps) {
     }
   }
 
-  const handleTeamSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newTeamId = e.target.value
+  const handleTeamSelect = (newTeamId: string) => {
     setSelectedTeam(newTeamId)
     setSelectedMyPlayers([])
     setSelectedTheirPlayers([])
@@ -84,7 +93,6 @@ export function TradeProposal({ teamId, otherTeams }: TradeProposalProps) {
     e.preventDefault()
     
     if (!selectedTeam || selectedMyPlayers.length === 0 || selectedTheirPlayers.length === 0) {
-      alert("Please select at least one player from each team")
       return
     }
 
@@ -132,92 +140,186 @@ export function TradeProposal({ teamId, otherTeams }: TradeProposalProps) {
       setTheirPlayers([])
       
       router.refresh()
-      alert("Trade proposal sent!")
     } catch (error) {
       console.error("Error creating trade:", error)
-      alert("Failed to create trade proposal")
     } finally {
       setLoading(false)
     }
   }
 
+  const selectedTeamName = otherTeams.find(t => t.id === selectedTeam)?.name
+  const isValid = selectedTeam && selectedMyPlayers.length > 0 && selectedTheirPlayers.length > 0
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Select Team to Trade With
-        </label>
-        <select
-          value={selectedTeam}
-          onChange={handleTeamSelect}
-          className="w-full px-3 py-2 border border-input rounded-md"
-          required
-        >
-          <option value="">Choose a team...</option>
-          {otherTeams.map(team => (
-            <option key={team.id} value={team.id}>
-              {team.name}
-            </option>
-          ))}
-        </select>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ArrowRightLeft className="h-5 w-5" />
+          Propose Trade
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Team Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="team-select">Select Team to Trade With</Label>
+            <Select value={selectedTeam} onValueChange={handleTeamSelect}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a team..." />
+              </SelectTrigger>
+              <SelectContent>
+                {otherTeams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-      {selectedTeam && !loadingPlayers && (
-        <>
-          <div>
-            <h4 className="font-medium mb-2">Select Your Players to Trade</h4>
-            <div className="grid gap-2 max-h-60 overflow-y-auto">
-              {myPlayers.map(player => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  teamId={teamId}
-                  selectable
-                  selected={selectedMyPlayers.includes(player.id)}
-                  onSelect={() => togglePlayer(player.id, true)}
-                />
-              ))}
+          {/* Loading State */}
+          {loadingPlayers && (
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-48" />
+              <div className="grid gap-2">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          <div>
-            <h4 className="font-medium mb-2">Select Players You Want</h4>
-            <div className="grid gap-2 max-h-60 overflow-y-auto">
-              {theirPlayers.map(player => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  teamId={selectedTeam}
-                  selectable
-                  selected={selectedTheirPlayers.includes(player.id)}
-                  onSelect={() => togglePlayer(player.id, false)}
+          {/* Trade Interface */}
+          {selectedTeam && !loadingPlayers && (
+            <>
+              <div className="text-center py-2">
+                <Badge variant="outline" className="text-sm">
+                  Trade with {selectedTeamName}
+                </Badge>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Your Players */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Your Players
+                      {selectedMyPlayers.length > 0 && (
+                        <Badge variant="secondary">
+                          {selectedMyPlayers.length} selected
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {myPlayers.length > 0 ? (
+                        myPlayers.map(player => (
+                          <PlayerCard
+                            key={player.id}
+                            player={player}
+                            teamId={teamId}
+                            selectable
+                            selected={selectedMyPlayers.includes(player.id)}
+                            onSelect={() => togglePlayer(player.id, true)}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-4 text-muted-foreground text-sm">
+                          No players available
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Their Players */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      {selectedTeamName} Players
+                      {selectedTheirPlayers.length > 0 && (
+                        <Badge variant="secondary">
+                          {selectedTheirPlayers.length} selected
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                      {theirPlayers.length > 0 ? (
+                        theirPlayers.map(player => (
+                          <PlayerCard
+                            key={player.id}
+                            player={player}
+                            teamId={selectedTeam}
+                            selectable
+                            selected={selectedTheirPlayers.includes(player.id)}
+                            onSelect={() => togglePlayer(player.id, false)}
+                          />
+                        ))
+                      ) : (
+                        <div className="text-center py-4 text-muted-foreground text-sm">
+                          No players available
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Trade Validation */}
+              {!isValid && (selectedMyPlayers.length > 0 || selectedTheirPlayers.length > 0) && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please select at least one player from each team to propose a trade.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Separator />
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <Label htmlFor="notes" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Trade Notes (optional)
+                </Label>
+                <Textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Add any comments about this trade proposal..."
                 />
-              ))}
-            </div>
-          </div>
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Notes (optional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-input rounded-md"
-              rows={3}
-              placeholder="Any additional comments about this trade..."
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || selectedMyPlayers.length === 0 || selectedTheirPlayers.length === 0}
-            className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? "Sending..." : "Send Trade Proposal"}
-          </button>
-        </>
-      )}
-    </form>
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading || !isValid}
+                className="w-full"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending Trade Proposal...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Trade Proposal
+                  </>
+                )}
+              </Button>
+            </>
+          )}
+        </form>
+      </CardContent>
+    </Card>
   )
 }

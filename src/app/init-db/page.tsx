@@ -1,12 +1,155 @@
 "use client"
 
 import { useState } from "react"
+import * as React from "react"
 import { createClient } from "@/utils/supabase/client"
+
+// Define all teams data
+const TEAMS_DATA = [
+  { name: 'Aioli', slug: 'aioli', email: 'aioli@8aside.com' },
+  { name: 'WAM', slug: 'wam', email: 'wam@8aside.com' },
+  { name: 'FoodDrop', slug: 'fooddrop', email: 'fooddrop@8aside.com' },
+  { name: 'Bliss', slug: 'bliss', email: 'bliss@8aside.com' },
+  { name: 'Karcher', slug: 'karcher', email: 'karcher@8aside.com' },
+  { name: 'Full Barrell', slug: 'full-barrell', email: 'fullbarrell@8aside.com' },
+  { name: 'Ready Freddie', slug: 'ready-freddie', email: 'readyfreddie@8aside.com' },
+  { name: 'Mini Bar', slug: 'mini-bar', email: 'minibar@8aside.com' }
+]
+
+// Define all players data by team
+const PLAYERS_BY_TEAM = {
+  'aioli': [
+    'Adrian Almandoz',
+    'Graeme Jones',
+    'John Aboud',
+    'Jordan Weeks',
+    'Matthew Camacho',
+    'Matthew Clerk',
+    'Myles Yorke',
+    'Romario Gonzales',
+    'Seve Day'
+  ],
+  'wam': [
+    'Joel Ogeer',
+    'Jonathan Low',
+    'Joshua Joseph',
+    'Keshav Bahadursingh',
+    'Luke Darwent',
+    'Mark Pereira',
+    'Matthew Jardim',
+    'Stokeley Smart',
+    'Willie Medford'
+  ],
+  'fooddrop': [
+    'Christian Landreth-Smith',
+    'Brandon Brown',
+    'Craig Beepath',
+    'Jesu Rampersad',
+    'Jordan Vieira',
+    'Kwesi Callender',
+    'Luke Ramdeen',
+    'Ross Williams'
+  ],
+  'bliss': [
+    'Benjamin Decle',
+    'Gary Griffith III',
+    'Kevin Ferreira',
+    'Kristian Bocage',
+    'Peter Sealy II',
+    'Richard Scott',
+    'Rosario Sookdeo',
+    'Sean De Silva',
+    'Richard Fifi'
+  ],
+  'karcher': [
+    'Charles Hadden',
+    'Jelani Bynoe',
+    'Justin Brooks',
+    'Ross Darlington',
+    'Scott Fanovich',
+    'Tyrese Williams',
+    'Dillion Abraham',
+    'John Paul Abraham'
+  ],
+  'full-barrell': [
+    'Adian Young',
+    'Jerell Alexander',
+    'Kyle Mowser',
+    'Kyron Rudd',
+    'Randy Antoine',
+    'Raul Rampersad',
+    'Ryan Mowser',
+    'Ryan Williams',
+    'Shirvan Ramdhanie'
+  ],
+  'ready-freddie': [
+    'Benn Fitzawilliams',
+    'Craig Cockburn',
+    'Dylan Galt',
+    'John De Lima',
+    'John Murray',
+    'Jonathan Sealy',
+    'Kristoff Headly',
+    'Paul Fitzwilliams',
+    'Sebastian Peterson'
+  ],
+  'mini-bar': [
+    'Daniel West',
+    'Kiel Lopez',
+    'Matthew Sealy',
+    'Ryan Daniel',
+    'Shavak Ramberan',
+    'Varindra Jagrup',
+    'Xavier Jones',
+    'Anim Hosein',
+    'JC Patterson'
+  ]
+}
 
 export default function InitDBPage() {
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(false)
   const [results, setResults] = useState<string[]>([])
+  const [dbStats, setDbStats] = useState<{teams: number, players: number, trades: number} | null>(null)
   const supabase = createClient()
+
+  // Helper function to generate players data
+  const generatePlayersData = (teamIdMap: Record<string, string>) => {
+    const players: Array<{name: string, team_id: string, rank: null}> = []
+    
+    Object.entries(PLAYERS_BY_TEAM).forEach(([teamSlug, playerNames]) => {
+      const teamId = teamIdMap[teamSlug]
+      if (teamId) {
+        playerNames.forEach(name => {
+          players.push({ name, team_id: teamId, rank: null })
+        })
+      }
+    })
+    
+    return players
+  }
+
+  // Check current database state
+  const checkDatabase = async () => {
+    setChecking(true)
+    try {
+      const [teamsCount, playersCount, tradesCount] = await Promise.all([
+        supabase.from("teams").select("*", { count: 'exact', head: true }),
+        supabase.from("players").select("*", { count: 'exact', head: true }),
+        supabase.from("trades").select("*", { count: 'exact', head: true })
+      ])
+
+      setDbStats({
+        teams: teamsCount.count || 0,
+        players: playersCount.count || 0,
+        trades: tradesCount.count || 0
+      })
+    } catch (error) {
+      console.error("Error checking database:", error)
+    } finally {
+      setChecking(false)
+    }
+  }
 
   const initializeDatabase = async () => {
     setLoading(true)
@@ -26,114 +169,29 @@ export default function InitDBPage() {
       // Insert teams
       setResults(prev => [...prev, "Inserting teams..."])
       
-      const teams = [
-        { id: '11111111-1111-1111-1111-111111111111', name: 'Aioli', slug: 'aioli', email: 'aioli@8aside.com' },
-        { id: '22222222-2222-2222-2222-222222222222', name: 'WAM', slug: 'wam', email: 'wam@8aside.com' },
-        { id: '33333333-3333-3333-3333-333333333333', name: 'FoodDrop', slug: 'fooddrop', email: 'fooddrop@8aside.com' },
-        { id: '44444444-4444-4444-4444-444444444444', name: 'Bliss', slug: 'bliss', email: 'bliss@8aside.com' },
-        { id: '55555555-5555-5555-5555-555555555555', name: 'Karcher', slug: 'karcher', email: 'karcher@8aside.com' },
-        { id: '66666666-6666-6666-6666-666666666666', name: 'Full Barrell', slug: 'full-barrell', email: 'fullbarrell@8aside.com' },
-        { id: '77777777-7777-7777-7777-777777777777', name: 'Ready Freddie', slug: 'ready-freddie', email: 'readyfreddie@8aside.com' },
-        { id: '88888888-8888-8888-8888-888888888888', name: 'Mini Bar', slug: 'mini-bar', email: 'minibar@8aside.com' }
-      ]
+      const { data: insertedTeams, error: teamsError } = await supabase
+        .from("teams")
+        .upsert(TEAMS_DATA, { onConflict: 'slug' })
+        .select()
       
-      const { error: teamsError } = await supabase.from("teams").insert(teams)
       if (teamsError) throw teamsError
       
-      setResults(prev => [...prev, `✓ Inserted ${teams.length} teams`])
+      setResults(prev => [...prev, `✓ Inserted ${TEAMS_DATA.length} teams`])
+      
+      // Create a map of team slugs to IDs
+      const teamIdMap = insertedTeams.reduce((acc: any, team: any) => {
+        acc[team.slug] = team.id
+        return acc
+      }, {})
       
       // Insert players
       setResults(prev => [...prev, "Inserting players..."])
       
-      const players = [
-        // Aioli (9 players)
-        { name: 'Adrian Almandoz', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'Graeme Jones', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'John Aboud', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'Jordan Weeks', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'Matthew Camacho', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'Matthew Clerk', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'Myles Yorke', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'Romario Gonzales', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        { name: 'Seve Day', team_id: '11111111-1111-1111-1111-111111111111', rank: null },
-        
-        // WAM (9 players)
-        { name: 'Joel Ogeer', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Jonathan Low', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Joshua Joseph', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Keshav Bahadursingh', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Luke Darwent', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Mark Pereira', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Matthew Jardim', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Stokeley Smart', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        { name: 'Willie Medford', team_id: '22222222-2222-2222-2222-222222222222', rank: null },
-        
-        // FoodDrop (8 players)
-        { name: 'Christian Landreth-Smith', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        { name: 'Brandon Brown', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        { name: 'Craig Beepath', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        { name: 'Jesu Rampersad', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        { name: 'Jordan Vieira', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        { name: 'Kwesi Callender', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        { name: 'Luke Ramdeen', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        { name: 'Ross Williams', team_id: '33333333-3333-3333-3333-333333333333', rank: null },
-        
-        // Bliss (9 players)
-        { name: 'Benjamin Decle', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Gary Griffith III', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Kevin Ferreira', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Kristian Bocage', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Peter Sealy II', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Richard Scott', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Rosario Sookdeo', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Sean De Silva', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        { name: 'Richard Fifi', team_id: '44444444-4444-4444-4444-444444444444', rank: null },
-        
-        // Karcher (8 players)
-        { name: 'Charles Hadden', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        { name: 'Jelani Bynoe', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        { name: 'Justin Brooks', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        { name: 'Ross Darlington', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        { name: 'Scott Fanovich', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        { name: 'Tyrese Williams', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        { name: 'Dillion Abraham', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        { name: 'John Paul Abraham', team_id: '55555555-5555-5555-5555-555555555555', rank: null },
-        
-        // Full Barrell (9 players)
-        { name: 'Adian Young', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Jerell Alexander', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Kyle Mowser', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Kyron Rudd', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Randy Antoine', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Raul Rampersad', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Ryan Mowser', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Ryan Williams', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        { name: 'Shirvan Ramdhanie', team_id: '66666666-6666-6666-6666-666666666666', rank: null },
-        
-        // Ready Freddie (9 players)
-        { name: 'Benn Fitzawilliams', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'Craig Cockburn', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'Dylan Galt', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'John De Lima', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'John Murray', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'Jonathan Sealy', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'Kristoff Headly', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'Paul Fitzwilliams', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        { name: 'Sebastian Peterson', team_id: '77777777-7777-7777-7777-777777777777', rank: null },
-        
-        // Mini Bar (9 players)
-        { name: 'Daniel West', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'Kiel Lopez', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'Matthew Sealy', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'Ryan Daniel', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'Shavak Ramberan', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'Varindra Jagrup', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'Xavier Jones', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'Anim Hosein', team_id: '88888888-8888-8888-8888-888888888888', rank: null },
-        { name: 'JC Patterson', team_id: '88888888-8888-8888-8888-888888888888', rank: null }
-      ]
+      const players = generatePlayersData(teamIdMap)
       
-      const { error: playersError } = await supabase.from("players").insert(players)
+      const { error: playersError } = await supabase
+        .from("players")
+        .upsert(players, { onConflict: 'name,team_id' })
       if (playersError) throw playersError
       
       setResults(prev => [...prev, `✓ Inserted ${players.length} players`])
@@ -144,35 +202,172 @@ export default function InitDBPage() {
       setResults(prev => [...prev, `❌ Error: ${error.message}`])
     } finally {
       setLoading(false)
+      checkDatabase() // Refresh stats after initialization
     }
   }
+
+  const updateDatabase = async () => {
+    setLoading(true)
+    setResults([])
+    
+    try {
+      // Get existing teams to preserve their IDs
+      setResults(prev => [...prev, "Fetching existing teams..."])
+      const { data: existingTeams } = await supabase
+        .from("teams")
+        .select("*")
+      
+      const existingTeamMap = (existingTeams || []).reduce((acc: any, team: any) => {
+        acc[team.slug] = team
+        return acc
+      }, {})
+      
+      setResults(prev => [...prev, `✓ Found ${existingTeams?.length || 0} existing teams`])
+      
+      // Insert only missing teams
+      const teamsToInsert = TEAMS_DATA.filter(team => !existingTeamMap[team.slug])
+      
+      if (teamsToInsert.length > 0) {
+        setResults(prev => [...prev, `Inserting ${teamsToInsert.length} new teams...`])
+        const { error: teamsError } = await supabase
+          .from("teams")
+          .upsert(teamsToInsert, { onConflict: 'slug' })
+        
+        if (teamsError) throw teamsError
+        setResults(prev => [...prev, `✓ Inserted ${teamsToInsert.length} new teams`])
+      } else {
+        setResults(prev => [...prev, "✓ All teams already exist"])
+      }
+      
+      // Get all teams (including newly inserted ones)
+      const { data: allTeams } = await supabase
+        .from("teams")
+        .select("*")
+      
+      const teamIdMap = allTeams?.reduce((acc: any, team: any) => {
+        acc[team.slug] = team.id
+        return acc
+      }, {}) || {}
+      
+      // Get existing players
+      setResults(prev => [...prev, "Fetching existing players..."])
+      const { data: existingPlayers } = await supabase
+        .from("players")
+        .select("*")
+      
+      const existingPlayerMap = (existingPlayers || []).reduce((acc: any, player: any) => {
+        const key = `${player.name}-${player.team_id}`
+        acc[key] = player
+        return acc
+      }, {})
+      
+      setResults(prev => [...prev, `✓ Found ${existingPlayers?.length || 0} existing players`])
+      
+      // Generate all players that should exist
+      const allPlayersData = generatePlayersData(teamIdMap)
+      
+      // Filter out players that already exist (preserve their ranks and other data)
+      const playersToInsert = allPlayersData.filter(player => {
+        const key = `${player.name}-${player.team_id}`
+        return !existingPlayerMap[key]
+      })
+      
+      if (playersToInsert.length > 0) {
+        setResults(prev => [...prev, `Inserting ${playersToInsert.length} new players...`])
+        const { error: playersError } = await supabase
+          .from("players")
+          .upsert(playersToInsert, { onConflict: 'name,team_id' })
+        
+        if (playersError) throw playersError
+        setResults(prev => [...prev, `✓ Inserted ${playersToInsert.length} new players`])
+      } else {
+        setResults(prev => [...prev, "✓ All players already exist"])
+      }
+      
+      setResults(prev => [...prev, "✅ Database update completed successfully!"])
+      
+    } catch (error: any) {
+      console.error("Error:", error)
+      setResults(prev => [...prev, `❌ Error: ${error.message}`])
+    } finally {
+      setLoading(false)
+      checkDatabase() // Refresh stats after update
+    }
+  }
+
+  // Check database on mount
+  React.useEffect(() => {
+    checkDatabase()
+  }, [])
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
       <div className="max-w-2xl w-full space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Initialize Database</h1>
+          <h1 className="text-3xl font-bold mb-2">Database Management</h1>
           <p className="text-muted-foreground">
-            This will add all teams and players to your Supabase database
+            Initialize or update your Supabase database
           </p>
         </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <p className="text-amber-800 text-sm">
-            <strong>Warning:</strong> This will clear any existing data and replace it with the initial teams and players.
-          </p>
+        {/* Current Database Status */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h3 className="font-semibold mb-2">Current Database Status</h3>
+          {checking ? (
+            <p className="text-sm text-gray-600">Checking database...</p>
+          ) : dbStats ? (
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="font-medium">Teams:</span> {dbStats.teams}
+              </div>
+              <div>
+                <span className="font-medium">Players:</span> {dbStats.players}
+              </div>
+              <div>
+                <span className="font-medium">Trades:</span> {dbStats.trades}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600">Unable to fetch database status</p>
+          )}
         </div>
 
-        <button
-          onClick={initializeDatabase}
-          disabled={loading}
-          className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-md hover:bg-primary/90 disabled:opacity-50"
-        >
-          {loading ? "Initializing..." : "Initialize Database"}
-        </button>
+        <div className="space-y-4">
+          {/* Initialize Button */}
+          <div className="space-y-2">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-amber-800 text-sm">
+                <strong>Initialize:</strong> This will clear ALL existing data and replace it with the initial teams and players.
+              </p>
+            </div>
+            <button
+              onClick={initializeDatabase}
+              disabled={loading || checking}
+              className="w-full bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 disabled:opacity-50"
+            >
+              {loading ? "Processing..." : "Initialize Database (Clear All Data)"}
+            </button>
+          </div>
+
+          {/* Update Button */}
+          <div className="space-y-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800 text-sm">
+                <strong>Update:</strong> This will add any missing teams or players without affecting existing data. Player ranks and trades are preserved.
+              </p>
+            </div>
+            <button
+              onClick={updateDatabase}
+              disabled={loading || checking}
+              className="w-full bg-primary text-primary-foreground py-3 px-4 rounded-md hover:bg-primary/90 disabled:opacity-50"
+            >
+              {loading ? "Processing..." : "Update Database (Preserve Existing Data)"}
+            </button>
+          </div>
+        </div>
 
         {results.length > 0 && (
-          <div className="space-y-2 p-4 bg-muted rounded-lg">
+          <div className="space-y-2 p-4 bg-muted rounded-lg max-h-96 overflow-y-auto">
             {results.map((result, i) => (
               <p key={i} className="text-sm font-mono">{result}</p>
             ))}

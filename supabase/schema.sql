@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS players (
   team_id UUID REFERENCES teams(id) ON DELETE SET NULL,
   rank CHAR(1) CHECK (rank IN ('A', 'B', 'C') OR rank IS NULL),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(name, team_id)
 );
 
 -- Trades table
