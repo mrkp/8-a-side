@@ -4,17 +4,18 @@ import Link from "next/link"
 import { TradeProposal } from "@/components/trades/trade-proposal"
 import { TradeList } from "@/components/trades/trade-list"
 
-export default async function TradesPage() {
+export default async function TeamTradesPage({
+  params
+}: {
+  params: { teamId: string }
+}) {
   const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/")
 
   // Get team
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("email", user.email)
+    .eq("id", params.teamId)
     .single()
 
   if (!team) redirect("/")
@@ -23,7 +24,7 @@ export default async function TradesPage() {
   const { data: otherTeams } = await supabase
     .from("teams")
     .select("*")
-    .neq("id", team.id)
+    .neq("id", params.teamId)
     .order("name")
 
   // Get pending trades involving this team
@@ -38,7 +39,7 @@ export default async function TradesPage() {
         player:players(*)
       )
     `)
-    .or(`from_team_id.eq.${team.id},to_team_id.eq.${team.id}`)
+    .or(`from_team_id.eq.${params.teamId},to_team_id.eq.${params.teamId}`)
     .eq("status", "pending")
     .order("created_at", { ascending: false })
 
@@ -52,7 +53,7 @@ export default async function TradesPage() {
           </p>
         </div>
         <Link 
-          href="/dashboard/trades/history"
+          href={`/team/${params.teamId}/trades/history`}
           className="text-sm text-primary hover:underline"
         >
           View Trade History →
@@ -63,7 +64,7 @@ export default async function TradesPage() {
         <div>
           <h3 className="text-xl font-semibold mb-4">Propose New Trade</h3>
           <TradeProposal 
-            teamId={team.id} 
+            teamId={params.teamId} 
             otherTeams={otherTeams || []}
           />
         </div>
@@ -72,7 +73,7 @@ export default async function TradesPage() {
           <h3 className="text-xl font-semibold mb-4">Pending Trades</h3>
           <TradeList 
             trades={trades || []} 
-            currentTeamId={team.id}
+            currentTeamId={params.teamId}
           />
         </div>
       </div>

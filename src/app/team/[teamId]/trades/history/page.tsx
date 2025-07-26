@@ -2,17 +2,18 @@ import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 
-export default async function TradeHistoryPage() {
+export default async function TeamTradeHistoryPage({
+  params
+}: {
+  params: { teamId: string }
+}) {
   const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/")
 
   // Get team
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("email", user.email)
+    .eq("id", params.teamId)
     .single()
 
   if (!team) redirect("/")
@@ -29,7 +30,7 @@ export default async function TradeHistoryPage() {
         player:players(*)
       )
     `)
-    .or(`from_team_id.eq.${team.id},to_team_id.eq.${team.id}`)
+    .or(`from_team_id.eq.${params.teamId},to_team_id.eq.${params.teamId}`)
     .in("status", ["accepted", "declined"])
     .order("responded_at", { ascending: false })
 
@@ -43,7 +44,7 @@ export default async function TradeHistoryPage() {
           </p>
         </div>
         <Link 
-          href="/dashboard/trades"
+          href={`/team/${params.teamId}/trades`}
           className="text-sm text-primary hover:underline"
         >
           ← Back to Trades
@@ -57,7 +58,7 @@ export default async function TradeHistoryPage() {
       ) : (
         <div className="space-y-4">
           {trades.map(trade => {
-            const isMyOffer = trade.from_team_id === team.id
+            const isMyOffer = trade.from_team_id === params.teamId
             const fromPlayers = trade.trade_players?.filter(tp => tp.direction === 'from') || []
             const toPlayers = trade.trade_players?.filter(tp => tp.direction === 'to') || []
 

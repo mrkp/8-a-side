@@ -1,19 +1,19 @@
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { PlayerCard } from "@/components/team/player-card"
-import type { Player } from "@/lib/types/database"
 
-export default async function DashboardPage() {
+export default async function TeamPage({
+  params
+}: {
+  params: { teamId: string }
+}) {
   const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/")
 
   // Get team
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("email", user.email)
+    .eq("id", params.teamId)
     .single()
 
   if (!team) redirect("/")
@@ -22,7 +22,7 @@ export default async function DashboardPage() {
   const { data: players } = await supabase
     .from("players")
     .select("*")
-    .eq("team_id", team.id)
+    .eq("team_id", params.teamId)
     .order("rank", { ascending: true, nullsLast: true })
     .order("name", { ascending: true })
 
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
           <PlayerCard
             key={player.id}
             player={player}
-            teamId={team.id}
+            teamId={params.teamId}
             editable
           />
         ))}

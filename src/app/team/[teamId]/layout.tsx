@@ -3,34 +3,23 @@ import { createClient } from "@/utils/supabase/server"
 import Link from "next/link"
 import { RealtimeTrades } from "@/components/realtime/realtime-trades"
 
-export default async function DashboardLayout({
+export default async function TeamLayout({
   children,
+  params
 }: {
   children: React.ReactNode
+  params: { teamId: string }
 }) {
   const supabase = await createClient()
   
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  if (!user) {
-    redirect("/")
-  }
-
   // Get team data
   const { data: team } = await supabase
     .from("teams")
     .select("*")
-    .eq("email", user.email)
+    .eq("id", params.teamId)
     .single()
 
   if (!team) {
-    redirect("/")
-  }
-
-  const handleSignOut = async () => {
-    "use server"
-    const supabase = await createClient()
-    await supabase.auth.signOut()
     redirect("/")
   }
 
@@ -42,37 +31,35 @@ export default async function DashboardLayout({
             <h1 className="text-xl font-bold">{team.name}</h1>
             <nav className="flex items-center gap-4">
               <Link 
-                href="/dashboard" 
+                href={`/team/${params.teamId}`} 
                 className="text-sm font-medium hover:text-primary"
               >
                 My Team
               </Link>
               <Link 
-                href="/dashboard/trades" 
+                href={`/team/${params.teamId}/trades`} 
                 className="text-sm font-medium hover:text-primary"
               >
                 Trades
               </Link>
               <Link 
-                href="/dashboard/tournament" 
+                href={`/team/${params.teamId}/tournament`} 
                 className="text-sm font-medium hover:text-primary"
               >
                 Tournament
               </Link>
             </nav>
           </div>
-          <form action={handleSignOut}>
-            <button
-              type="submit"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              Sign Out
-            </button>
-          </form>
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Switch Team
+          </Link>
         </div>
       </header>
       <main className="container py-6">
-        <RealtimeTrades teamId={team.id} />
+        <RealtimeTrades teamId={params.teamId} />
         {children}
       </main>
     </div>

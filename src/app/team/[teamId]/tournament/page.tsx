@@ -1,12 +1,12 @@
 import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/navigation"
 import { TeamOverview } from "@/components/tournament/team-overview"
 
-export default async function TournamentPage() {
+export default async function TeamTournamentPage({
+  params
+}: {
+  params: { teamId: string }
+}) {
   const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect("/")
 
   // Get all teams with their players
   const { data: teams } = await supabase
