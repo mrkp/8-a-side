@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Users, ExternalLink, Star, Medal, Award } from "lucide-react"
+import { Users, ExternalLink, Star, Medal, Award, Trophy } from "lucide-react"
 import type { Team, Player } from "@/lib/types/database"
 
 interface TeamOverviewProps {
@@ -98,7 +98,12 @@ export function TeamOverview({ team }: TeamOverviewProps) {
           {team.players.length > 0 ? (
             team.players.map(player => (
               <div key={player.id} className="flex items-center justify-between text-sm py-1 px-2 rounded hover:bg-muted/50">
-                <span className="font-medium">{player.name}</span>
+                <span className="font-medium flex items-center gap-1">
+                  {player.is_professional && (
+                    <Trophy className="w-3 h-3 text-yellow-500" title="Professional Player" />
+                  )}
+                  {player.name}
+                </span>
                 {getRankBadge(player.rank)}
               </div>
             ))

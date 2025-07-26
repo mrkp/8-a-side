@@ -115,13 +115,13 @@ export default function InitDBPage() {
 
   // Helper function to generate players data
   const generatePlayersData = (teamIdMap: Record<string, string>) => {
-    const players: Array<{name: string, team_id: string, rank: null}> = []
+    const players: Array<{name: string, team_id: string, rank: null, is_professional: boolean}> = []
     
     Object.entries(PLAYERS_BY_TEAM).forEach(([teamSlug, playerNames]) => {
       const teamId = teamIdMap[teamSlug]
       if (teamId) {
         playerNames.forEach(name => {
-          players.push({ name, team_id: teamId, rank: null })
+          players.push({ name, team_id: teamId, rank: null, is_professional: false })
         })
       }
     })

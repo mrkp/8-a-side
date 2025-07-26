@@ -72,7 +72,7 @@ export default async function TeamLayout({
             </div>
             
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
+              <Link href="/admin">
                 Switch Team
               </Link>
             </Button>

@@ -11,6 +11,7 @@ export type Player = {
   name: string
   team_id: string | null
   rank: 'A' | 'B' | 'C' | null
+  is_professional?: boolean
   created_at: string
   updated_at: string
 }
