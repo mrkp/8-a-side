@@ -1,4 +1,4 @@
-# Database Setup Guide
+# QPCC 8-A-SIDE Football Tournament - Database Setup Guide
 
 ## Step 1: Create Database Schema
 

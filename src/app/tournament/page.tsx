@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Trophy, Users, ArrowLeft, TrendingUp, Activity } from "lucide-react"
+import { Trophy, Users, ArrowLeft, TrendingUp, Activity, Dribbble } from "lucide-react"
+import { QPCCHeader } from "@/components/qpcc-header"
 import Link from "next/link"
 
 export default async function TournamentPage() {
@@ -44,9 +45,9 @@ export default async function TournamentPage() {
   // Calculate tournament statistics
   const totalPlayers = teamsWithSortedPlayers.reduce((acc, team) => acc + team.players.length, 0)
   const totalRankedPlayers = teamsWithSortedPlayers.reduce((acc, team) => 
-    acc + team.players.filter(p => p.rank).length, 0)
+    acc + team.players.filter((p: any) => p.rank).length, 0)
   const rankStats = teamsWithSortedPlayers.reduce((acc, team) => {
-    team.players.forEach(player => {
+    team.players.forEach((player: any) => {
       if (player.rank) {
         acc[player.rank] = (acc[player.rank] || 0) + 1
       }
@@ -59,9 +60,13 @@ export default async function TournamentPage() {
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Trophy className="h-6 w-6 text-yellow-500" />
-            <h1 className="text-xl font-bold">Tournament Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <QPCCHeader />
+            <Separator orientation="vertical" className="h-8" />
+            <div className="flex items-center gap-3">
+              <Dribbble className="h-6 w-6 text-green-600" />
+              <h1 className="text-xl font-bold">Tournament Dashboard</h1>
+            </div>
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/">
@@ -78,7 +83,7 @@ export default async function TournamentPage() {
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-2">
               <Badge variant="secondary" className="text-lg px-4 py-1">
-                8-a-Side Cricket Tournament
+                QPCC 8-A-SIDE Football Tournament
               </Badge>
             </div>
             <h2 className="text-4xl font-bold">Tournament Overview</h2>

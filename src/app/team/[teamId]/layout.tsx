@@ -28,11 +28,13 @@ export default async function TeamLayout({
     .single()
 
   // Get pending trades for this team
-  const { count: pendingTrades } = await supabase
+  const { count } = await supabase
     .from("trades")
     .select("*", { count: 'exact', head: true })
     .or(`from_team_id.eq.${resolvedParams.teamId},to_team_id.eq.${resolvedParams.teamId}`)
     .eq("status", "pending")
+  
+  const pendingTrades = count || 0
 
   if (!team) {
     redirect("/")

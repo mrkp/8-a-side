@@ -1,8 +1,8 @@
-# 8-a-side Tournament Draft & Trade Manager
+# QPCC 8-A-SIDE Football Tournament Draft & Trade Manager
 
 ## Project Overview
 
-A web application for managing an 8-a-side cricket tournament where sponsor teams draft and trade players. Built with Next.js 14 (App Router), TypeScript, Supabase, and shadcn/ui.
+A web application for managing the QPCC 8-A-SIDE Football Tournament where sponsor teams draft and trade players. Built with Next.js 14 (App Router), TypeScript, Supabase, and shadcn/ui.
 
 ## Key Features
 

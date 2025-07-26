@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Trophy, Users, ArrowRight, Zap } from "lucide-react"
+import { Trophy, Users, ArrowRight, Zap, Dribbble } from "lucide-react"
+import { QPCCHeader } from "@/components/qpcc-header"
 
 export default async function Home() {
   const supabase = await createClient()
@@ -34,21 +35,25 @@ export default async function Home() {
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center space-y-6 mb-16">
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <QPCCHeader />
+          </div>
+          
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Trophy className="h-8 w-8 text-yellow-500" />
+            <Dribbble className="h-8 w-8 text-green-600" />
             <Badge variant="secondary" className="text-lg px-4 py-1">
-              8-a-Side Cricket Tournament
+              8-A-SIDE Football Tournament
             </Badge>
           </div>
           
           <h1 className="text-5xl font-bold tracking-tight">
-            Draft & Trade
+            <span className="text-primary">QPCC</span> Draft & Trade
             <span className="text-primary"> Hub</span>
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Manage your cricket team, rank players, and propose strategic trades 
-            in this competitive 8-a-side tournament
+            Manage your football team, rank players, and propose strategic trades 
+            in the official QPCC 8-A-SIDE tournament
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -113,7 +118,10 @@ export default async function Home() {
         <div className="mt-16">
           <Card className="max-w-4xl mx-auto">
             <CardHeader>
-              <CardTitle className="text-center">Tournament Stats</CardTitle>
+              <CardTitle className="text-center flex items-center justify-center gap-2">
+                <Dribbble className="h-5 w-5 text-green-600" />
+                Tournament Stats
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
@@ -122,8 +130,8 @@ export default async function Home() {
                   <div className="text-sm text-muted-foreground">Sponsor Teams</div>
                 </div>
                 <div className="space-y-2">
-                  <div className="text-3xl font-bold text-green-500">{totalPlayers || 0}</div>
-                  <div className="text-sm text-muted-foreground">Total Players</div>
+                  <div className="text-3xl font-bold text-green-600">{totalPlayers || 0}</div>
+                  <div className="text-sm text-muted-foreground">Football Players</div>
                 </div>
                 <div className="space-y-2">
                   <div className="text-3xl font-bold text-orange-500">{activeTrades || 0}</div>
