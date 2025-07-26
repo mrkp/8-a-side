@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 8-a-Side Tournament Draft & Trade Manager
 
-## Getting Started
+A web application for managing an 8-a-side cricket tournament with team-based player trading.
 
-First, run the development server:
+## Setup
 
+### 1. Install dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Set up Supabase Database
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Go to your [Supabase project SQL Editor](https://supabase.com/dashboard/project/_/sql)
+2. Run the schema creation script from `supabase/schema.sql`
+3. Run the seed data script from `supabase/seed.sql`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Environment Variables
 
-## Learn More
+The `.env.local` file is already configured with the production Supabase credentials.
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Run the development server
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Features
 
-## Deploy on Vercel
+- **Team Management**: 8 sponsor teams manage their players
+- **Player Rankings**: Assign A/B/C rankings to players
+- **Trading System**: Propose and accept/decline trades between teams
+- **Tournament View**: See all teams and their players
+- **Real-time Updates**: Changes reflected instantly across all users
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Teams
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Aioli
+2. Wam!
+3. FoodDrop
+4. Bliss
+5. Karcher
+6. Full Barrel
+7. Ready Freddie
+8. Mini Bar
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Supabase (PostgreSQL + Auth + Realtime)
+- Tailwind CSS + shadcn/ui
+- Vercel (deployment)
+
+## Database Schema
+
+See `supabase/schema.sql` for the complete database structure including:
+- Teams table
+- Players table with ranking system
+- Trades table with status tracking
+- Trade history for audit logging
+- Row Level Security policies
+
+## Development
+
+The app uses the production Supabase database directly. Any changes made locally will affect the production data.
+
+## Deployment
+
+Push to GitHub and Vercel will automatically deploy. The Supabase environment variables are already configured.
