@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Trophy, Users, Dribbble, Star, Medal, Award, Shield } from "lucide-react"
+import { Trophy, Users, Dribbble, Star, Medal, Award, Shield, CalendarIcon, BarChart3, Target } from "lucide-react"
 import { QPCCHeader } from "@/components/qpcc-header"
 
 export default async function Home() {
@@ -91,6 +91,39 @@ export default async function Home() {
               Follow the official QPCC 8-A-SIDE Football Tournament. Track team standings, 
               player rankings, and trading activity as sponsor teams compete for glory.
             </p>
+            
+            <div className="flex flex-wrap gap-4 justify-center pt-6">
+              <Button asChild size="lg">
+                <Link href="/dashboard">
+                  <Trophy className="mr-2 h-5 w-5" />
+                  Tournament Dashboard
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/fixtures">
+                  <CalendarIcon className="mr-2 h-5 w-5" />
+                  Fixtures
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/standings">
+                  <BarChart3 className="mr-2 h-5 w-5" />
+                  Standings
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/leaderboard">
+                  <Target className="mr-2 h-5 w-5" />
+                  Top Scorers
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/knockout">
+                  <Trophy className="mr-2 h-5 w-5" />
+                  Knockout Stage
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>

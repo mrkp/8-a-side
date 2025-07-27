@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Trophy, Users, ArrowRight, Zap, Dribbble } from "lucide-react"
+import { Trophy, Users, ArrowRight, Zap, Dribbble, Activity, Settings } from "lucide-react"
 import { QPCCHeader } from "@/components/qpcc-header"
 
 export default async function AdminPage() {
@@ -65,16 +65,34 @@ export default async function AdminPage() {
             in the official QPCC 8-A-SIDE tournament
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" asChild>
-              <Link href="/tournament">
-                <Trophy className="mr-2 h-4 w-4" />
-                Tournament Overview
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button size="lg" asChild>
+                <Link href="/tournament">
+                  <Trophy className="mr-2 h-4 w-4" />
+                  Tournament Overview
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              
+              <Button size="lg" variant="secondary" asChild>
+                <Link href="/admin/score">
+                  <Activity className="mr-2 h-4 w-4" />
+                  Score Matches
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/admin/setup">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Match Setup
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
             
-            <div className="flex gap-6 text-sm text-muted-foreground">
+            <div className="flex gap-6 text-sm text-muted-foreground justify-center">
               <div className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
                 {totalPlayers} Players
