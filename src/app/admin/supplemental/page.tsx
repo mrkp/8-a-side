@@ -85,11 +85,9 @@ export default function SupplementalDraftPage() {
       .is("drafted_to_team_id", null)
       .order("player(rank_estimate)", { ascending: true })
 
-    // Fetch draft order
+    // Fetch draft order using the custom function
     const { data: teams } = await supabase
-      .from("supplemental_draft_order")
-      .select("*")
-      .order("draft_position")
+      .rpc("get_supplemental_draft_order")
 
     if (players) setAvailablePlayers(players)
     if (teams) setDraftOrder(teams)
@@ -217,6 +215,18 @@ export default function SupplementalDraftPage() {
                           <span className="font-medium">{currentTeam?.strength_score.toFixed(2)}</span>
                         </div>
                       </div>
+                      
+                      {/* C Player Guidance for first two picks */}
+                      {currentPick < 2 && (
+                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                          <p className="text-sm font-medium text-yellow-800">
+                            ⚠️ Please select a C-rated player
+                          </p>
+                          <p className="text-xs text-yellow-600 mt-1">
+                            Food Drop and Full Barrel should pick C players first
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -264,16 +274,24 @@ export default function SupplementalDraftPage() {
                   </p>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2">
-                    {availablePlayers.map(sp => (
-                      <Card
-                        key={sp.id}
-                        className={`cursor-pointer transition-all ${
-                          selectedPlayer?.id === sp.id 
-                            ? 'ring-2 ring-primary' 
-                            : 'hover:shadow-md'
-                        }`}
-                        onClick={() => setSelectedPlayer(sp)}
-                      >
+                    {availablePlayers.map(sp => {
+                      const isC = (sp.player.rank_estimate || sp.player.rank) === 'C'
+                      const shouldHighlightC = currentPick < 2 && isC
+                      
+                      return (
+                        <Card
+                          key={sp.id}
+                          className={`cursor-pointer transition-all ${
+                            selectedPlayer?.id === sp.id 
+                              ? 'ring-2 ring-primary' 
+                              : 'hover:shadow-md'
+                          } ${
+                            shouldHighlightC 
+                              ? 'bg-yellow-50 border-yellow-300' 
+                              : ''
+                          }`}
+                          onClick={() => setSelectedPlayer(sp)}
+                        >
                         <CardContent className="pt-6">
                           <div className="flex items-start gap-4">
                             <Avatar className="h-12 w-12">
@@ -309,7 +327,8 @@ export default function SupplementalDraftPage() {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
                 
