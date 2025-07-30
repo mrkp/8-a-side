@@ -17,9 +17,10 @@ interface Player {
   id: string
   name: string
   image_url?: string
-  team?: { name: string }
-  rank?: string
-  rank_estimate?: string
+  team_id?: string | null
+  team?: { id: string; name: string } | null
+  rank?: string | null
+  rank_estimate?: string | null
 }
 
 interface Vote {
@@ -48,7 +49,7 @@ export default function PlayerRankingPage() {
   }, [currentVoter])
 
   const fetchPlayers = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("players")
       .select(`
         id,
@@ -56,12 +57,30 @@ export default function PlayerRankingPage() {
         image_url,
         rank,
         rank_estimate,
-        team:teams(name)
+        team_id
       `)
       .order("name")
 
+    if (error) {
+      console.error('Error fetching players:', error)
+      setLoading(false)
+      return
+    }
+
     if (data) {
-      setPlayers(data)
+      // Fetch teams separately to avoid the array issue
+      const { data: teams } = await supabase
+        .from("teams")
+        .select("id, name")
+      
+      const teamsMap = new Map(teams?.map(t => [t.id, t]))
+      
+      const playersWithTeams = data.map(player => ({
+        ...player,
+        team: player.team_id ? teamsMap.get(player.team_id) : null
+      }))
+      
+      setPlayers(playersWithTeams)
     }
     setLoading(false)
   }
