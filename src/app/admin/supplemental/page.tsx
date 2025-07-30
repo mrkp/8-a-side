@@ -48,9 +48,18 @@ interface DraftOrder {
   draft_position: number
 }
 
+interface DraftPhaseInfo {
+  pick_number: number
+  team_name: string
+  phase: 'C_PICKS' | 'OPEN_DRAFT'
+  expected_player_type: string
+  is_current: boolean
+}
+
 export default function SupplementalDraftPage() {
   const [availablePlayers, setAvailablePlayers] = useState<SupplementalPlayer[]>([])
   const [draftOrder, setDraftOrder] = useState<DraftOrder[]>([])
+  const [draftPhases, setDraftPhases] = useState<DraftPhaseInfo[]>([])
   const [currentPick, setCurrentPick] = useState(0)
   const [loading, setLoading] = useState(true)
   const [selectedPlayer, setSelectedPlayer] = useState<SupplementalPlayer | null>(null)
@@ -85,12 +94,26 @@ export default function SupplementalDraftPage() {
       .is("drafted_to_team_id", null)
       .order("player(rank_estimate)", { ascending: true })
 
-    // Fetch draft order using the custom function
-    const { data: teams } = await supabase
+    // Get current draft team
+    const { data: currentTeamData } = await supabase
       .rpc("get_supplemental_draft_order")
 
+    // Get full draft phase display
+    const { data: phaseData } = await supabase
+      .rpc("get_full_draft_order_display")
+
+    // Get current pick number
+    const { count: draftedCount } = await supabase
+      .from("supplemental_players")
+      .select("*", { count: 'exact', head: true })
+      .not("drafted_to_team_id", "is", null)
+
     if (players) setAvailablePlayers(players)
-    if (teams) setDraftOrder(teams)
+    if (currentTeamData && currentTeamData.length > 0) {
+      setDraftOrder([currentTeamData[0]])
+      setCurrentPick((draftedCount || 0) + 1)
+    }
+    if (phaseData) setDraftPhases(phaseData)
     
     setLoading(false)
   }
@@ -147,8 +170,10 @@ export default function SupplementalDraftPage() {
     }
   }
 
-  const currentTeam = draftOrder[currentPick]
-  const draftComplete = currentPick >= draftOrder.length || availablePlayers.length === 0
+  const currentTeam = draftOrder[0] // Always the first item since we fetch current team
+  const currentPhase = draftPhases.find(p => p.is_current)
+  const draftComplete = availablePlayers.length === 0
+  const isPhase1 = currentPhase?.phase === 'C_PICKS'
 
   if (loading) {
     return (
@@ -216,14 +241,26 @@ export default function SupplementalDraftPage() {
                         </div>
                       </div>
                       
-                      {/* C Player Guidance for first two picks */}
-                      {currentPick < 2 && (
-                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      {/* Phase indicator */}
+                      {currentPhase && (
+                        <div className="mt-4">
+                          <Badge 
+                            variant={isPhase1 ? "destructive" : "default"}
+                            className="w-full justify-center"
+                          >
+                            {isPhase1 ? "Phase 1: C Player Selection" : "Phase 2: Open Draft"}
+                          </Badge>
+                        </div>
+                      )}
+                      
+                      {/* C Player Guidance for phase 1 */}
+                      {isPhase1 && (
+                        <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                           <p className="text-sm font-medium text-yellow-800">
-                            ⚠️ Please select a C-rated player
+                            ⚠️ Must select a C-rated player
                           </p>
                           <p className="text-xs text-yellow-600 mt-1">
-                            Food Drop and Full Barrel should pick C players first
+                            Phase 1 requires C player selection
                           </p>
                         </div>
                       )}
@@ -239,21 +276,44 @@ export default function SupplementalDraftPage() {
                 <CardTitle>Draft Order</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {draftOrder.map((team, index) => (
+                <div className="space-y-3">
+                  {/* Phase 1 Header */}
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Phase 1: C Players Only
+                  </div>
+                  
+                  {draftPhases.filter(p => p.phase === 'C_PICKS').map((phase) => (
                     <div
-                      key={team.id}
+                      key={phase.pick_number}
                       className={`flex items-center justify-between p-2 rounded ${
-                        index === currentPick ? 'bg-primary/10 border-primary' : ''
-                      } ${index < currentPick ? 'opacity-50' : ''}`}
+                        phase.is_current ? 'bg-primary/10 border border-primary' : ''
+                      } ${phase.pick_number < currentPick ? 'opacity-50' : ''}`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">#{index + 1}</span>
-                        <span className="text-sm">{team.name}</span>
+                        <span className="text-sm font-medium">#{phase.pick_number}</span>
+                        <span className="text-sm">{phase.team_name}</span>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        {team.player_count}/10
-                      </Badge>
+                      <Badge variant="outline" className="text-xs">C</Badge>
+                    </div>
+                  ))}
+                  
+                  {/* Phase 2 Header */}
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mt-4">
+                    Phase 2: Open Draft
+                  </div>
+                  
+                  {draftPhases.filter(p => p.phase === 'OPEN_DRAFT').slice(0, 8).map((phase) => (
+                    <div
+                      key={phase.pick_number}
+                      className={`flex items-center justify-between p-2 rounded ${
+                        phase.is_current ? 'bg-primary/10 border border-primary' : ''
+                      } ${phase.pick_number < currentPick ? 'opacity-50' : ''}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">#{phase.pick_number}</span>
+                        <span className="text-sm">{phase.team_name}</span>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">Any</Badge>
                     </div>
                   ))}
                 </div>
@@ -276,7 +336,7 @@ export default function SupplementalDraftPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     {availablePlayers.map(sp => {
                       const isC = (sp.player.rank_estimate || sp.player.rank) === 'C'
-                      const shouldHighlightC = currentPick < 2 && isC
+                      const shouldHighlightC = isPhase1 && isC
                       
                       return (
                         <Card
@@ -358,10 +418,19 @@ export default function SupplementalDraftPage() {
             <DialogDescription>
               Draft {selectedPlayer?.player.name} to {currentTeam?.name}?
             </DialogDescription>
+            
+            {/* Phase 1 C player warning */}
+            {isPhase1 && (selectedPlayer?.player.rank_estimate || selectedPlayer?.player.rank) !== 'C' && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+                ⚠️ Phase 1 requires selecting a C-rated player!
+              </div>
+            )}
+            
+            {/* Player preference warning */}
             {selectedPlayer?.player.preferred_teammate && 
              selectedPlayer.player.preferred_teammate.team?.name !== currentTeam?.name && (
               <div className="mt-2 text-sm text-yellow-600">
-                ⚠️ Note: Player prefers to be with {selectedPlayer.player.preferred_teammate.name} 
+                Note: Player prefers to be with {selectedPlayer.player.preferred_teammate.name} 
                 on {selectedPlayer.player.preferred_teammate.team?.name}
               </div>
             )}
