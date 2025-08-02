@@ -319,14 +319,14 @@ export default function ScorePage() {
 
       {/* Goal Dialog */}
       <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
+        <DialogContent className="max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>
               Record Goal - {scoringTeam === 'A' ? selectedFixture?.teamA?.name : selectedFixture?.teamB?.name}
             </DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto flex-1 px-1">
             <div className="space-y-2">
               <Label>Select Player</Label>
               <RadioGroup value={selectedPlayer} onValueChange={setSelectedPlayer}>
@@ -393,7 +393,7 @@ export default function ScorePage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0 pt-4 border-t">
             <Button variant="outline" onClick={() => setIsGoalDialogOpen(false)}>
               Cancel
             </Button>
