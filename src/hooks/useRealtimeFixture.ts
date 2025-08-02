@@ -48,11 +48,17 @@ export function useRealtimeFixture({ fixtureId }: UseRealtimeFixtureOptions) {
             team:teams(id, name)
           `)
           .eq('fixture_id', fixtureId)
-          .eq('type', 'goal')
+          .in('type', ['goal', 'own_goal'])
           .order('minute', { ascending: false })
 
         if (!error && data) {
           setEvents(data)
+          // Set the most recent goal as lastGoal (data is already sorted by minute descending)
+          const recentGoal = data.find(event => event.type === 'goal' || event.type === 'own_goal')
+          if (recentGoal && recentGoal.type === 'goal') {
+            console.log('Setting initial lastGoal from fetched events:', recentGoal)
+            setLastGoal(recentGoal)
+          }
         }
       } catch (err) {
         console.error('Error fetching events:', err)
@@ -86,12 +92,16 @@ export function useRealtimeFixture({ fixtureId }: UseRealtimeFixtureOptions) {
             }
           }
         )
-        .subscribe((status) => {
-          console.log('Fixture channel status:', status)
+        .subscribe((status, error) => {
+          console.log('Fixture channel status:', status, error)
+          if (error) {
+            console.error('Fixture channel error:', error)
+          }
           setIsConnected(status === 'SUBSCRIBED')
         })
 
       // Events channel
+      console.log('Setting up events channel for fixture:', fixtureId)
       channelsRef.current.events = supabase
         .channel(`events-${fixtureId}`)
         .on(
@@ -119,9 +129,22 @@ export function useRealtimeFixture({ fixtureId }: UseRealtimeFixtureOptions) {
 
               if (newEvent) {
                 console.log('Processing new event:', newEvent)
-                setEvents(prev => [newEvent, ...prev])
-                if (newEvent.type === 'goal') {
-                  console.log('Setting lastGoal:', newEvent)
+                // Add to events list maintaining sort order
+                setEvents(prev => {
+                  const updated = [newEvent, ...prev]
+                  // Sort by minute descending to ensure most recent is first
+                  return updated.sort((a, b) => b.minute - a.minute)
+                })
+                
+                if (newEvent.type === 'goal' || newEvent.type === 'own_goal') {
+                  console.log('Setting lastGoal:', {
+                    id: newEvent.id,
+                    type: newEvent.type,
+                    player: newEvent.player,
+                    team: newEvent.team,
+                    minute: newEvent.minute
+                  })
+                  // Update lastGoal state
                   setLastGoal(newEvent)
                 }
                 // Refetch fixture to ensure score is synced
@@ -130,7 +153,12 @@ export function useRealtimeFixture({ fixtureId }: UseRealtimeFixtureOptions) {
             }
           }
         )
-        .subscribe()
+        .subscribe((status, error) => {
+          console.log('Events channel status:', status, error)
+          if (error) {
+            console.error('Events channel error:', error)
+          }
+        })
     }
 
     // Initial fetch

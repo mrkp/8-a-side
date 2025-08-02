@@ -1,65 +1,30 @@
 import { createClient } from "@/utils/supabase/server"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Trophy, ChevronRight, Users } from "lucide-react"
+import { Trophy } from "lucide-react"
 import Link from "next/link"
 import { QPCCHeader } from "@/components/qpcc-header"
 import { Separator } from "@/components/ui/separator"
-
-interface BracketMatch {
-  id: string
-  stage: string
-  position: number
-  team_a?: string
-  team_b?: string
-  winner?: string
-  fixture_id?: string
-  teamA?: any
-  teamB?: any
-  fixture?: any
-}
+import { cn } from "@/lib/utils"
 
 export default async function KnockoutPage() {
   const supabase = await createClient()
 
-  // Get knockout bracket data
-  const { data: bracketMatches } = await supabase
-    .from("knockout_bracket")
+  // Get knockout fixtures directly from fixtures table
+  const { data: knockoutFixtures } = await supabase
+    .from("fixtures")
     .select(`
       *,
-      teamA:teams!knockout_bracket_team_a_fkey(id, name, logo),
-      teamB:teams!knockout_bracket_team_b_fkey(id, name, logo),
-      fixture:fixtures!knockout_bracket_fixture_id_fkey(id, score, status)
+      teamA:teams!fixtures_team_a_fkey(id, name, logo),
+      teamB:teams!fixtures_team_b_fkey(id, name, logo)
     `)
-    .order("stage")
-    .order("position")
+    .in("stage", ["semifinal", "final"])
+    .order("date", { ascending: true })
 
-  // Group matches by stage
-  const quarterFinals = bracketMatches?.filter(m => m.stage === 'quarterfinal') || []
-  const semiFinals = bracketMatches?.filter(m => m.stage === 'semifinal') || []
-  const final = bracketMatches?.filter(m => m.stage === 'final') || []
-
-  // Get active teams sorted by group stage performance for bracket generation
-  const { data: teams } = await supabase
-    .from("teams")
-    .select("*")
-    .eq("active", true)
-    .order("group")
-
-  const sortedTeams = (teams || []).sort((a, b) => {
-    const statsA = a.stats || { points: 0, gd: 0, gf: 0 }
-    const statsB = b.stats || { points: 0, gd: 0, gf: 0 }
-    
-    if (statsB.points !== statsA.points) return statsB.points - statsA.points
-    if (statsB.gd !== statsA.gd) return statsB.gd - statsA.gd
-    return statsB.gf - statsA.gf
-  })
-
-  const groupATeams = sortedTeams.filter(t => t.group === 'A').slice(0, 4)
-  const groupBTeams = sortedTeams.filter(t => t.group === 'B').slice(0, 4)
-
-  const canGenerateBracket = quarterFinals.length === 0 && groupATeams.length === 4 && groupBTeams.length === 4
+  const semiFinals = knockoutFixtures?.filter(f => f.stage === 'semifinal') || []
+  const final = knockoutFixtures?.filter(f => f.stage === 'final') || []
+  const hasKnockoutFixtures = semiFinals.length > 0 || final.length > 0
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,7 +47,7 @@ export default async function KnockoutPage() {
                 <img src="/wam-logo.svg" alt="WAM!" className="h-4 w-auto" />
               </a>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard">Back to Dashboard</Link>
+                <Link href="/">Back to Home</Link>
               </Button>
             </div>
           </div>
@@ -102,69 +67,51 @@ export default async function KnockoutPage() {
             </p>
           </div>
 
-          {/* Generate Bracket Button */}
-          {canGenerateBracket && (
-            <Card className="border-dashed">
-              <CardContent className="text-center py-12">
-                <p className="text-muted-foreground mb-4">
-                  Group stage complete! Generate the knockout bracket based on final standings.
-                </p>
-                <p className="text-sm text-muted-foreground mb-6">
-                  Matchups: 1A vs 4B, 2A vs 3B, 1B vs 4A, 2B vs 3A
-                </p>
-                <Button asChild size="lg">
-                  <Link href="/admin/knockout/generate">
-                    Generate Knockout Bracket
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Tournament Bracket Visualization */}
-          {quarterFinals.length > 0 && (
-            <div className="grid gap-8 lg:grid-cols-[1fr_1fr_1fr]">
-              {/* Quarter Finals */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-center mb-6">Quarter Finals</h3>
-                {quarterFinals.map((match, idx) => (
-                  <BracketMatch key={match.id} match={match} />
-                ))}
-              </div>
-
-              {/* Semi Finals */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-center mb-6">Semi Finals</h3>
-                <div className="pt-16">
+          {hasKnockoutFixtures ? (
+            <div className="max-w-5xl mx-auto">
+              {/* Semifinals */}
+              <div className="mb-12">
+                <h3 className="text-2xl font-bold text-center mb-6">Semifinals</h3>
+                <p className="text-center text-muted-foreground mb-8">
+                  October 3rd, 2025 • 6:20 PM AST
+                </p>
+                <div className="grid gap-6 md:grid-cols-2">
                   {semiFinals.map((match, idx) => (
-                    <div key={match.id} className={idx === 0 ? "mb-32" : ""}>
-                      <BracketMatch match={match} />
-                    </div>
+                    <BracketMatch key={match.id} match={match} index={idx + 1} />
                   ))}
                 </div>
               </div>
 
               {/* Final */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-center mb-6">Final</h3>
-                <div className="flex items-center justify-center h-full">
-                  {final[0] && <BracketMatch match={final[0]} isFinal />}
+              {final.length > 0 && (
+                <div>
+                  <h3 className="text-2xl font-bold text-center mb-6">Final</h3>
+                  <p className="text-center text-muted-foreground mb-8">
+                    October 3rd, 2025 • 8:20 PM AST • {final[0].venue}
+                  </p>
+                  <div className="max-w-md mx-auto">
+                    <BracketMatch match={final[0]} isFinal />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          )}
-
-          {/* Empty State */}
-          {quarterFinals.length === 0 && !canGenerateBracket && (
+          ) : (
+            /* Empty State */
             <Card>
               <CardContent className="text-center py-16">
                 <Trophy className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-lg text-muted-foreground">
-                  The knockout stage hasn't started yet
+                  The knockout stage hasn't been generated yet
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
                   Complete the group stage matches to generate the bracket
                 </p>
+                <Button asChild className="mt-6">
+                  <Link href="/admin/knockout">
+                    Generate Knockout Stage
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -174,76 +121,123 @@ export default async function KnockoutPage() {
   )
 }
 
-function BracketMatch({ match, isFinal = false }: { match: BracketMatch, isFinal?: boolean }) {
-  const hasTeams = match.team_a && match.team_b
-  const isComplete = match.fixture?.status === 'completed'
-  const winnerId = isComplete && match.fixture?.score ? 
-    (match.fixture.score.teamA > match.fixture.score.teamB ? match.team_a : match.team_b) : null
+function BracketMatch({ match, isFinal = false, index }: { match: any, isFinal?: boolean, index?: number }) {
+  const hasTeams = match.teamA || match.teamB
+  const isComplete = match.status === 'completed'
+  const isLive = match.status === 'live'
+  const isUpcoming = match.status === 'upcoming'
+  const score = match.score
+
+  const getWinner = () => {
+    if (!isComplete || !score) return null
+    return score.teamA > score.teamB ? 'A' : 'B'
+  }
+
+  const winner = getWinner()
 
   return (
-    <Card className={`${isFinal ? 'border-2 border-yellow-500' : ''} ${!hasTeams ? 'opacity-50' : ''}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <Badge variant={isFinal ? 'destructive' : 'secondary'}>
-            {match.stage === 'quarterfinal' ? `QF ${match.position}` : 
-             match.stage === 'semifinal' ? `SF ${match.position}` : 'FINAL'}
-          </Badge>
-          {match.fixture?.status === 'live' && (
-            <Badge variant="destructive" className="animate-pulse">LIVE</Badge>
+    <Link href={!isUpcoming ? `/live/${match.id}` : '#'} className={isUpcoming ? 'cursor-default' : ''}>
+      <Card className={cn(
+        "overflow-hidden transition-all",
+        !isUpcoming && "hover:shadow-lg cursor-pointer",
+        isFinal && "border-2 border-yellow-500",
+        isLive && "border-2 border-red-500"
+      )}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge variant={isFinal ? "destructive" : "secondary"}>
+                {isFinal ? "FINAL" : `SEMIFINAL ${index || ''}`}
+              </Badge>
+              {isLive && (
+                <Badge variant="destructive" className="animate-pulse">
+                  LIVE
+                </Badge>
+              )}
+              {isComplete && (
+                <Badge variant="secondary">
+                  FT
+                </Badge>
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {match.venue}
+            </span>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {hasTeams ? (
+            <div className="space-y-3">
+              {/* Team A */}
+              <div className={cn(
+                "flex items-center justify-between p-3 rounded-lg",
+                winner === 'A' && "bg-green-500/10 border border-green-500/20"
+              )}>
+                <div className="flex items-center gap-3">
+                  {match.teamA?.logo && (
+                    <img src={match.teamA.logo} alt="" className="h-8 w-8 object-contain" />
+                  )}
+                  <span className={cn(
+                    "font-medium",
+                    winner === 'A' && "text-green-600 dark:text-green-400"
+                  )}>
+                    {match.teamA?.name || "TBD"}
+                  </span>
+                </div>
+                {(isLive || isComplete) && (
+                  <span className={cn(
+                    "text-2xl font-bold",
+                    winner === 'A' && "text-green-600 dark:text-green-400"
+                  )}>
+                    {score?.teamA || 0}
+                  </span>
+                )}
+              </div>
+
+              <div className="text-center text-xs text-muted-foreground">vs</div>
+
+              {/* Team B */}
+              <div className={cn(
+                "flex items-center justify-between p-3 rounded-lg",
+                winner === 'B' && "bg-green-500/10 border border-green-500/20"
+              )}>
+                <div className="flex items-center gap-3">
+                  {match.teamB?.logo && (
+                    <img src={match.teamB.logo} alt="" className="h-8 w-8 object-contain" />
+                  )}
+                  <span className={cn(
+                    "font-medium",
+                    winner === 'B' && "text-green-600 dark:text-green-400"
+                  )}>
+                    {match.teamB?.name || "TBD"}
+                  </span>
+                </div>
+                {(isLive || isComplete) && (
+                  <span className={cn(
+                    "text-2xl font-bold",
+                    winner === 'B' && "text-green-600 dark:text-green-400"
+                  )}>
+                    {score?.teamB || 0}
+                  </span>
+                )}
+              </div>
+
+              {isComplete && winner && (
+                <div className="text-center pt-2">
+                  <Badge variant="default" className="bg-green-600">
+                    {winner === 'A' ? match.teamA?.name : match.teamB?.name} advances
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              {isFinal ? "Awaiting semifinal results" : "Teams to be determined"}
+            </p>
           )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {hasTeams ? (
-          <div className="space-y-3">
-            {/* Team A */}
-            <div className={`flex items-center justify-between p-2 rounded ${
-              winnerId === match.team_a ? 'bg-green-500/20 border border-green-500' : ''
-            }`}>
-              <div className="flex items-center gap-2">
-                {match.teamA?.logo && (
-                  <img src={match.teamA.logo} alt="" className="h-6 w-6 object-contain" />
-                )}
-                <span className="font-medium">{match.teamA?.name || 'TBD'}</span>
-              </div>
-              {match.fixture && (
-                <span className="text-lg font-bold">{match.fixture.score.teamA}</span>
-              )}
-            </div>
-
-            {/* Team B */}
-            <div className={`flex items-center justify-between p-2 rounded ${
-              winnerId === match.team_b ? 'bg-green-500/20 border border-green-500' : ''
-            }`}>
-              <div className="flex items-center gap-2">
-                {match.teamB?.logo && (
-                  <img src={match.teamB.logo} alt="" className="h-6 w-6 object-contain" />
-                )}
-                <span className="font-medium">{match.teamB?.name || 'TBD'}</span>
-              </div>
-              {match.fixture && (
-                <span className="text-lg font-bold">{match.fixture.score.teamB}</span>
-              )}
-            </div>
-
-            {match.fixture_id && (
-              <div className="pt-2 border-t">
-                <Button asChild size="sm" variant="ghost" className="w-full">
-                  <Link href={`/live/${match.fixture_id}`}>
-                    View Match
-                    <ChevronRight className="ml-1 h-3 w-3" />
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-4 text-muted-foreground">
-            <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Awaiting teams</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }

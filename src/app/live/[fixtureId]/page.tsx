@@ -21,6 +21,8 @@ interface MatchEvent {
   type: string
   player?: any
   team?: any
+  half?: number
+  assist_player?: any
 }
 
 export default function LiveMatchPage() {
@@ -30,10 +32,13 @@ export default function LiveMatchPage() {
   const [fixture, setFixture] = useState<any>(null)
   const [events, setEvents] = useState<MatchEvent[]>([])
   const [loading, setLoading] = useState(true)
+  const [displayTime, setDisplayTime] = useState(Date.now())
   const [celebrationData, setCelebrationData] = useState<{
     show: boolean
     playerName: string
     playerImage?: string
+    assistName?: string
+    assistImage?: string
     teamName: string
     rank?: string
   }>({
@@ -47,6 +52,48 @@ export default function LiveMatchPage() {
     fetchFixtureData()
     subscribeToUpdates()
   }, [fixtureId])
+
+  // Update display time every second for live matches
+  useEffect(() => {
+    if (fixture?.status === 'live' && fixture.started_at) {
+      const interval = setInterval(() => {
+        setDisplayTime(Date.now())
+      }, 1000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [fixture?.status, fixture?.started_at])
+
+  // Calculate elapsed time based on actual start time and current half
+  const getElapsedSeconds = () => {
+    if (!fixture?.started_at) return 0
+    
+    const currentHalf = fixture.current_half || 1
+    let startTime: number
+    
+    if (currentHalf === 2 && fixture.second_half_started_at) {
+      // Second half - calculate from second half start
+      startTime = new Date(fixture.second_half_started_at).getTime()
+    } else {
+      // First half - calculate from match start
+      startTime = new Date(fixture.started_at).getTime()
+    }
+    
+    const now = fixture.ended_at 
+      ? new Date(fixture.ended_at).getTime() 
+      : fixture.half_time_at && currentHalf === 1
+      ? new Date(fixture.half_time_at).getTime()
+      : displayTime
+    
+    const elapsed = Math.floor((now - startTime) / 1000) - (fixture.total_paused_time || 0)
+    return Math.max(0, elapsed)
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
 
   const fetchFixtureData = async () => {
     const { data: fixtureData } = await supabase
@@ -71,10 +118,12 @@ export default function LiveMatchPage() {
       .from("events")
       .select(`
         *,
-        player:players(id, name, image_url, rank),
+        player:players!events_player_id_fkey(id, name, image_url, rank),
+        assist_player:players!events_assist_player_id_fkey(id, name, image_url),
         team:teams(id, name)
       `)
       .eq("fixture_id", fixtureId)
+      .in("type", ["goal", "own_goal"])
       .order("minute", { ascending: false })
 
     if (eventsData) {
@@ -117,21 +166,26 @@ export default function LiveMatchPage() {
             .from("events")
             .select(`
               *,
-              player:players(id, name, image_url, rank),
+              player:players!events_player_id_fkey(id, name, image_url, rank),
+              assist_player:players!events_assist_player_id_fkey(id, name, image_url),
               team:teams(id, name)
             `)
             .eq("id", payload.new.id)
             .single()
 
-          if (newEvent && newEvent.type === 'goal' && newEvent.player) {
-            // Show celebration for regular goals
-            setCelebrationData({
-              show: true,
-              playerName: newEvent.player.name,
-              playerImage: newEvent.player.image_url,
-              teamName: newEvent.team.name,
-              rank: newEvent.player.rank
-            })
+          if (newEvent && (newEvent.type === 'goal' || newEvent.type === 'own_goal') && newEvent.player) {
+            // Show celebration for goals (not own goals)
+            if (newEvent.type === 'goal') {
+              setCelebrationData({
+                show: true,
+                playerName: newEvent.player.name,
+                playerImage: newEvent.player.image_url,
+                teamName: newEvent.team.name,
+                rank: newEvent.player.rank,
+                assistName: newEvent.assist_player?.name,
+                assistImage: newEvent.assist_player?.image_url
+              })
+            }
           }
           
           fetchEvents()
@@ -181,9 +235,9 @@ export default function LiveMatchPage() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/dashboard">
+                <Link href="/">
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Dashboard
+                  Home
                 </Link>
               </Button>
               <Separator orientation="vertical" className="h-8" />
@@ -277,9 +331,21 @@ export default function LiveMatchPage() {
                       </span>
                     </div>
                     {isLive && (
-                      <div className="mt-4 flex items-center justify-center gap-2 text-sm">
-                        <Timer className="h-4 w-4" />
-                        <span>Match in progress</span>
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-center gap-2 text-sm">
+                          <Timer className="h-4 w-4" />
+                          <span className="font-mono text-lg">{formatTime(getElapsedSeconds())}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {fixture.current_half === 2 ? '2nd Half' : '1st Half'} • Match in progress
+                        </p>
+                      </div>
+                    )}
+                    {fixture?.half_time_at && !fixture?.second_half_started_at && (
+                      <div className="mt-4">
+                        <Badge variant="secondary" className="text-sm">
+                          HALF TIME
+                        </Badge>
                       </div>
                     )}
                   </div>
@@ -333,6 +399,9 @@ export default function LiveMatchPage() {
                         <div key={event.id} className="flex items-start gap-4 pb-4 border-b last:border-0">
                           <Badge variant="outline" className="mt-1">
                             {event.minute}'
+                            {event.half === 2 && (
+                              <span className="ml-1 text-xs">(2nd)</span>
+                            )}
                           </Badge>
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
@@ -357,6 +426,11 @@ export default function LiveMatchPage() {
                                     </Badge>
                                   )}
                                 </div>
+                                {event.assist_player && (
+                                  <p className="text-sm text-muted-foreground mt-1">
+                                    Assist: {event.assist_player.name}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </div>

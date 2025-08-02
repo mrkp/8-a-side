@@ -1,0 +1,6 @@
+-- Add match timing fields to fixtures table
+ALTER TABLE fixtures 
+ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS ended_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS paused_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS total_paused_time INTEGER DEFAULT 0;

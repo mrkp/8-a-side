@@ -61,25 +61,36 @@ export function StadiumGoalCelebration({
     }
   }, [show])
 
-  console.log('StadiumGoalCelebration render - show:', show, 'playerName:', playerName)
+  console.log('StadiumGoalCelebration render:', {
+    show,
+    playerName,
+    teamName,
+    hasAnimationData: !!animationData,
+    showPlayerInfo
+  })
   
-  if (!show) return null
+  if (!show) {
+    console.log('Not showing celebration - show is false')
+    return null
+  }
 
   return (
-    <>
+    <AnimatePresence>
       {show && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#B34AFF] overflow-hidden"
+          className="fixed inset-0 flex items-center justify-center bg-[#B34AFF] overflow-hidden"
           style={{ 
             zIndex: 9999,
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0
+            bottom: 0,
+            width: '100vw',
+            height: '100vh'
           }}
         >
         {/* Lottie Animation Background */}
@@ -200,13 +211,14 @@ export function StadiumGoalCelebration({
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.8 }}
             transition={{ delay: 1 }}
-            className="absolute bottom-10 right-10 text-black text-2xl font-bold"
+            className="absolute bottom-10 right-10 flex items-center gap-2 text-black text-2xl font-bold"
           >
-            Powered by WAM!
+            <span>Powered by</span>
+            <img src="/wam-logo.svg" alt="WAM!" className="h-10 w-auto" />
           </motion.div>
         </div>
       </motion.div>
       )}
-    </>
+    </AnimatePresence>
   )
 }

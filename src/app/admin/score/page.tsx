@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -27,6 +27,13 @@ interface Fixture {
   score: { teamA: number; teamB: number }
   teamA?: any
   teamB?: any
+  started_at?: string
+  ended_at?: string
+  paused_at?: string
+  total_paused_time?: number
+  current_half?: number
+  half_time_at?: string
+  second_half_started_at?: string
 }
 
 interface Player {
@@ -46,8 +53,8 @@ export default function ScorePage() {
   const [selectedPlayer, setSelectedPlayer] = useState<string>("")
   const [selectedAssistPlayer, setSelectedAssistPlayer] = useState<string>("")
   const [isOwnGoal, setIsOwnGoal] = useState(false)
-  const [elapsedTime, setElapsedTime] = useState(0)
-  const [isTimerRunning, setIsTimerRunning] = useState(false)
+  const [matchStartTime, setMatchStartTime] = useState<Date | null>(null)
+  const [showHalfTimeDialog, setShowHalfTimeDialog] = useState(false)
 
   const supabase = createClient()
   const router = useRouter()
@@ -59,19 +66,87 @@ export default function ScorePage() {
   useEffect(() => {
     if (selectedFixture) {
       fetchPlayers(selectedFixture.team_a, selectedFixture.team_b)
-      setIsTimerRunning(selectedFixture.status === 'live')
+      // Refetch fixture to get latest timing data
+      refreshFixtureData(selectedFixture.id)
+      
+      // Debug log
+      console.log('Selected fixture:', {
+        id: selectedFixture.id,
+        status: selectedFixture.status,
+        current_half: selectedFixture.current_half,
+        half_time_at: selectedFixture.half_time_at,
+        second_half_started_at: selectedFixture.second_half_started_at
+      })
     }
-  }, [selectedFixture])
+  }, [selectedFixture?.id])
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (isTimerRunning) {
-      interval = setInterval(() => {
-        setElapsedTime(prev => prev + 1)
-      }, 1000)
+  const refreshFixtureData = async (fixtureId: string) => {
+    const { data } = await supabase
+      .from("fixtures")
+      .select("*")
+      .eq("id", fixtureId)
+      .single()
+    
+    if (data) {
+      setSelectedFixture(prev => ({ ...prev, ...data }))
+      if (data.started_at) {
+        setMatchStartTime(new Date(data.started_at))
+      }
     }
-    return () => clearInterval(interval)
-  }, [isTimerRunning])
+  }
+
+  // Update timer display every second and force component re-render
+  const [, forceUpdate] = useState({})
+  useEffect(() => {
+    if (selectedFixture?.status === 'live' && selectedFixture.started_at) {
+      const interval = setInterval(() => {
+        // Force re-render to update timer display
+        forceUpdate({})
+      }, 1000)
+      
+      return () => clearInterval(interval)
+    }
+  }, [selectedFixture?.status, selectedFixture?.started_at])
+
+  // Calculate elapsed time based on actual start time and current half
+  const getElapsedSeconds = () => {
+    if (!selectedFixture?.started_at) {
+      console.log('No started_at for fixture:', selectedFixture?.id)
+      return 0
+    }
+    
+    const currentHalf = selectedFixture.current_half || 1
+    let startTime: number
+    
+    if (currentHalf === 2 && selectedFixture.second_half_started_at) {
+      // Second half - calculate from second half start
+      startTime = new Date(selectedFixture.second_half_started_at).getTime()
+    } else {
+      // First half - calculate from match start
+      startTime = new Date(selectedFixture.started_at).getTime()
+    }
+    
+    const now = selectedFixture.ended_at 
+      ? new Date(selectedFixture.ended_at).getTime() 
+      : selectedFixture.half_time_at && currentHalf === 1
+      ? new Date(selectedFixture.half_time_at).getTime()
+      : Date.now()
+    
+    const elapsed = Math.floor((now - startTime) / 1000) - (selectedFixture.total_paused_time || 0)
+    return Math.max(0, elapsed)
+  }
+  
+  // Get the current minute based on half
+  const getCurrentMinute = () => {
+    const elapsed = getElapsedSeconds()
+    const minutes = Math.floor(elapsed / 60)
+    const currentHalf = selectedFixture?.current_half || 1
+    
+    if (currentHalf === 2) {
+      return minutes + 21 // Add 20 minutes for first half + 1 for start of second
+    }
+    return minutes + 1
+  }
 
   const fetchFixtures = async () => {
     const { data } = await supabase
@@ -104,12 +179,16 @@ export default function ScorePage() {
 
     const { error } = await supabase
       .from("fixtures")
-      .update({ status: "live" })
+      .update({ 
+        status: "live",
+        started_at: new Date().toISOString()
+      })
       .eq("id", selectedFixture.id)
 
     if (!error) {
-      setSelectedFixture({ ...selectedFixture, status: "live" })
-      setIsTimerRunning(true)
+      const now = new Date().toISOString()
+      setSelectedFixture({ ...selectedFixture, status: "live", started_at: now })
+      setMatchStartTime(new Date(now))
       toast.success("Match started!")
     }
   }
@@ -119,13 +198,90 @@ export default function ScorePage() {
 
     const { error } = await supabase
       .from("fixtures")
-      .update({ status: "completed" })
+      .update({ 
+        status: "completed",
+        ended_at: new Date().toISOString()
+      })
       .eq("id", selectedFixture.id)
 
     if (!error) {
-      setIsTimerRunning(false)
       toast.success("Match completed!")
       router.push(`/live/${selectedFixture.id}`)
+    }
+  }
+  
+  const callHalfTime = async () => {
+    if (!selectedFixture || selectedFixture.current_half !== 1) return
+    
+    const elapsedSeconds = getElapsedSeconds()
+    if (elapsedSeconds < 1200) { // Less than 20 minutes
+      const minutes = Math.floor(elapsedSeconds / 60)
+      const confirm = window.confirm(`Only ${minutes} minutes have elapsed. Call half-time early?`)
+      if (!confirm) return
+    }
+    
+    const { error } = await supabase
+      .from("fixtures")
+      .update({ 
+        half_time_at: new Date().toISOString()
+      })
+      .eq("id", selectedFixture.id)
+
+    if (!error) {
+      setSelectedFixture({ 
+        ...selectedFixture, 
+        half_time_at: new Date().toISOString() 
+      })
+      setShowHalfTimeDialog(true)
+      toast.success("Half-time called!")
+    }
+  }
+  
+  const startSecondHalf = async () => {
+    if (!selectedFixture || selectedFixture.current_half !== 1) return
+    
+    const { error } = await supabase
+      .from("fixtures")
+      .update({ 
+        current_half: 2,
+        second_half_started_at: new Date().toISOString()
+      })
+      .eq("id", selectedFixture.id)
+
+    if (!error) {
+      setSelectedFixture({ 
+        ...selectedFixture, 
+        current_half: 2,
+        second_half_started_at: new Date().toISOString() 
+      })
+      setShowHalfTimeDialog(false)
+      toast.success("Second half started!")
+    }
+  }
+
+  const restartTimer = async () => {
+    if (!selectedFixture || selectedFixture.status !== 'live') return
+
+    const confirmed = window.confirm('Are you sure you want to restart the match timer? This will reset the match start time to now.')
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from("fixtures")
+      .update({ 
+        started_at: new Date().toISOString(),
+        total_paused_time: 0
+      })
+      .eq("id", selectedFixture.id)
+
+    if (!error) {
+      const now = new Date().toISOString()
+      setSelectedFixture({ 
+        ...selectedFixture, 
+        started_at: now,
+        total_paused_time: 0 
+      })
+      setMatchStartTime(new Date(now))
+      toast.success("Match timer restarted!")
     }
   }
 
@@ -157,7 +313,10 @@ export default function ScorePage() {
       return
     }
 
-    // Record event
+    // Record event with accurate minute based on match start time
+    const minute = getCurrentMinute()
+    const currentHalf = selectedFixture.current_half || 1
+    
     const { error: eventError } = await supabase
       .from("events")
       .insert({
@@ -165,8 +324,9 @@ export default function ScorePage() {
         team_id: scoringTeam === 'A' ? selectedFixture.team_a : selectedFixture.team_b,
         player_id: selectedPlayer,
         assist_player_id: selectedAssistPlayer || null,
-        minute: Math.floor(elapsedTime / 60),
-        type: isOwnGoal ? 'own_goal' : 'goal'
+        minute: minute,
+        type: isOwnGoal ? 'own_goal' : 'goal',
+        half: currentHalf
       })
 
     if (!eventError) {
@@ -245,19 +405,37 @@ export default function ScorePage() {
                   <CardTitle>Match Score</CardTitle>
                   <div className="flex items-center gap-4">
                     {selectedFixture.status === 'live' && (
-                      <div className="flex items-center gap-2">
-                        <Timer className="h-4 w-4" />
-                        <span className="font-mono text-lg">{formatTime(elapsedTime)}</span>
-                      </div>
+                      <>
+                        <div className="flex items-center gap-2">
+                          <Timer className="h-4 w-4" />
+                          <span className="font-mono text-lg">
+                            {formatTime(getElapsedSeconds())}
+                            <span className="text-sm text-muted-foreground ml-2">
+                              ({selectedFixture.current_half === 2 ? '2nd Half' : '1st Half'})
+                            </span>
+                          </span>
+                        </div>
+                        {(!selectedFixture.current_half || selectedFixture.current_half === 1) && !selectedFixture.half_time_at && (
+                          <Button onClick={callHalfTime} variant="secondary" size="sm">
+                            Half Time
+                          </Button>
+                        )}
+                        {selectedFixture.half_time_at && !selectedFixture.second_half_started_at && (
+                          <Button onClick={startSecondHalf} variant="secondary" size="sm">
+                            Start Second Half
+                          </Button>
+                        )}
+                        <Button onClick={restartTimer} variant="outline" size="sm">
+                          Restart Timer
+                        </Button>
+                        <Button onClick={endMatch} variant="destructive" size="sm">
+                          End Match
+                        </Button>
+                      </>
                     )}
                     {selectedFixture.status === 'upcoming' && (
                       <Button onClick={startMatch} size="sm">
                         Start Match
-                      </Button>
-                    )}
-                    {selectedFixture.status === 'live' && (
-                      <Button onClick={endMatch} variant="destructive" size="sm">
-                        End Match
                       </Button>
                     )}
                   </div>
@@ -399,6 +577,33 @@ export default function ScorePage() {
             </Button>
             <Button onClick={recordGoal} disabled={!selectedPlayer}>
               Record Goal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Half Time Dialog */}
+      <Dialog open={showHalfTimeDialog} onOpenChange={setShowHalfTimeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Half Time</DialogTitle>
+            <DialogDescription>
+              First half has ended. Take a break and start the second half when ready.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold mb-2">
+                {selectedFixture?.teamA?.name} {selectedFixture?.score.teamA} - {selectedFixture?.score.teamB} {selectedFixture?.teamB?.name}
+              </div>
+              <div className="text-muted-foreground">
+                First Half Duration: {formatTime(getElapsedSeconds())}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={startSecondHalf}>
+              Start Second Half
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -240,6 +240,23 @@ export default async function AdminPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            <Card className="hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Knockout Stage
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Generate and manage semifinals and final
+                </p>
+                <Button asChild className="w-full">
+                  <Link href="/admin/knockout">Manage Knockout</Link>
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
