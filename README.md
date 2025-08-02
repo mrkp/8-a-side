@@ -40,10 +40,8 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 2. Wam!
 3. FoodDrop
 4. Bliss
-5. Karcher
-6. Full Barrel
-7. Ready Freddie
-8. Mini Bar
+5. Full Barrel
+6. Mini Bar
 
 ## Tech Stack
 

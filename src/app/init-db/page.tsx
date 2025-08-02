@@ -10,9 +10,7 @@ const TEAMS_DATA = [
   { name: 'WAM', slug: 'wam', email: 'wam@8aside.com' },
   { name: 'FoodDrop', slug: 'fooddrop', email: 'fooddrop@8aside.com' },
   { name: 'Bliss', slug: 'bliss', email: 'bliss@8aside.com' },
-  { name: 'Karcher', slug: 'karcher', email: 'karcher@8aside.com' },
   { name: 'Full Barrell', slug: 'full-barrell', email: 'fullbarrell@8aside.com' },
-  { name: 'Ready Freddie', slug: 'ready-freddie', email: 'readyfreddie@8aside.com' },
   { name: 'Mini Bar', slug: 'mini-bar', email: 'minibar@8aside.com' }
 ]
 
@@ -61,16 +59,6 @@ const PLAYERS_BY_TEAM = {
     'Sean De Silva',
     'Richard Fifi'
   ],
-  'karcher': [
-    'Charles Hadden',
-    'Jelani Bynoe',
-    'Justin Brooks',
-    'Ross Darlington',
-    'Scott Fanovich',
-    'Tyrese Williams',
-    'Dillion Abraham',
-    'John Paul Abraham'
-  ],
   'full-barrell': [
     'Adian Young',
     'Jerell Alexander',
@@ -81,17 +69,6 @@ const PLAYERS_BY_TEAM = {
     'Ryan Mowser',
     'Ryan Williams',
     'Shirvan Ramdhanie'
-  ],
-  'ready-freddie': [
-    'Benn Fitzawilliams',
-    'Craig Cockburn',
-    'Dylan Galt',
-    'John De Lima',
-    'John Murray',
-    'Jonathan Sealy',
-    'Kristoff Headly',
-    'Paul Fitzwilliams',
-    'Sebastian Peterson'
   ],
   'mini-bar': [
     'Daniel West',

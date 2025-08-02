@@ -13,13 +13,14 @@ import { QPCCHeader } from "@/components/qpcc-header"
 export default async function AdminPage() {
   const supabase = await createClient()
   
-  // Get all teams with player counts
+  // Get all active teams with player counts
   const { data: teams } = await supabase
     .from("teams")
     .select(`
       *,
       players:players(count)
     `)
+    .eq("active", true)
     .order("name")
 
   // Get total player count
@@ -70,22 +71,6 @@ export default async function AdminPage() {
 
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" asChild>
-                <Link href="/admin/teams">
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Team Balance
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/admin/supplemental">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Draft Players
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              
               <Button size="lg" variant="outline" asChild>
                 <Link href="/admin/score">
                   <Activity className="mr-2 h-4 w-4" />

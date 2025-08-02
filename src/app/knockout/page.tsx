@@ -40,10 +40,11 @@ export default async function KnockoutPage() {
   const semiFinals = bracketMatches?.filter(m => m.stage === 'semifinal') || []
   const final = bracketMatches?.filter(m => m.stage === 'final') || []
 
-  // Get teams sorted by group stage performance for bracket generation
+  // Get active teams sorted by group stage performance for bracket generation
   const { data: teams } = await supabase
     .from("teams")
     .select("*")
+    .eq("active", true)
     .order("group")
 
   const sortedTeams = (teams || []).sort((a, b) => {

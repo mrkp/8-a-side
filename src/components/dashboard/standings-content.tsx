@@ -17,6 +17,7 @@ export default async function StandingsContent() {
   const { data: teams } = await supabase
     .from("teams")
     .select("*")
+    .eq("active", true)
     .order("name")
 
   // Sort teams by points, then goal difference, then goals for

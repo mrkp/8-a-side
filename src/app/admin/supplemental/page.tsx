@@ -119,9 +119,9 @@ export default function SupplementalDraftPage() {
   }
 
   const handleDraft = async () => {
-    if (!selectedPlayer || !draftOrder[currentPick]) return
+    if (!selectedPlayer || !currentTeam) return
 
-    const team = draftOrder[currentPick]
+    const team = currentTeam
     
     // Update supplemental player record
     const { error: supplementalError } = await supabase
@@ -146,15 +146,15 @@ export default function SupplementalDraftPage() {
         player_id: selectedPlayer.player_id,
         team_id: team.id,
         draft_type: "supplemental",
-        draft_round: Math.floor(currentPick / draftOrder.length) + 1,
-        draft_position: currentPick + 1
+        draft_round: Math.floor((currentPick - 1) / 6) + 1, // 6 teams in rotation
+        draft_position: currentPick
       })
 
     if (supplementalError || playerError || historyError) {
+      console.error("Draft errors:", { supplementalError, playerError, historyError })
       toast.error("Failed to complete draft pick")
     } else {
       toast.success(`${selectedPlayer.player.name} drafted to ${team.name}`)
-      setCurrentPick(prev => prev + 1)
       setSelectedPlayer(null)
       setConfirmDialog(false)
       fetchData()

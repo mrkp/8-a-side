@@ -18,10 +18,11 @@ export default async function LeaderboardPage() {
     .select("*")
     .limit(50)
 
-  // Get teams for filtering
+  // Get active teams for filtering
   const { data: teams } = await supabase
     .from("teams")
     .select("id, name")
+    .eq("active", true)
     .order("name")
 
   return (

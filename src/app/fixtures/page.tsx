@@ -4,10 +4,12 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarIcon, Clock, MapPin, Trophy } from "lucide-react"
 import { format } from "date-fns"
+import { formatTimeInTimezone, formatDateInTimezone } from "@/utils/date-helpers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { QPCCHeader } from "@/components/qpcc-header"
 import { Separator } from "@/components/ui/separator"
+import { TeamLogo } from "@/components/team-logo"
 
 export default async function FixturesPage() {
   const supabase = await createClient()
@@ -51,6 +53,12 @@ export default async function FixturesPage() {
                 <span className="text-xs text-muted-foreground">Powered by</span>
                 <img src="/wam-logo.svg" alt="WAM!" className="h-4 w-auto" />
               </a>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/fixtures/calendar">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  Calendar View
+                </Link>
+              </Button>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/">Back to Home</Link>
               </Button>
@@ -183,9 +191,11 @@ function FixtureCard({ fixture }: { fixture: any }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 flex-1">
-                {fixture.teamA?.logo && (
-                  <img src={fixture.teamA.logo} alt={fixture.teamA.name} className="h-8 w-8 object-contain" />
-                )}
+                <TeamLogo 
+                  src={fixture.teamA?.logo} 
+                  alt={fixture.teamA?.name || ''} 
+                  size="sm"
+                />
                 <span className="font-medium">{fixture.teamA?.name}</span>
               </div>
               {(isLive || isCompleted) && (
@@ -199,9 +209,11 @@ function FixtureCard({ fixture }: { fixture: any }) {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3 flex-1">
-                {fixture.teamB?.logo && (
-                  <img src={fixture.teamB.logo} alt={fixture.teamB.name} className="h-8 w-8 object-contain" />
-                )}
+                <TeamLogo 
+                  src={fixture.teamB?.logo} 
+                  alt={fixture.teamB?.name || ''} 
+                  size="sm"
+                />
                 <span className="font-medium">{fixture.teamB?.name}</span>
               </div>
               {(isLive || isCompleted) && (
@@ -213,11 +225,11 @@ function FixtureCard({ fixture }: { fixture: any }) {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <CalendarIcon className="h-3 w-3" />
-              <span>{format(new Date(fixture.date), 'MMM d, yyyy')}</span>
+              <span>{formatDateInTimezone(fixture.date)}</span>
             </div>
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              <span>{format(new Date(fixture.date), 'h:mm a')}</span>
+              <span>{formatTimeInTimezone(fixture.date)}</span>
             </div>
             {fixture.venue && (
               <div className="flex items-center gap-1">

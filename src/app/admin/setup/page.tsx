@@ -74,7 +74,7 @@ export default function SetupPage() {
 
   const fetchData = async () => {
     const [teamsRes, playersRes, fixturesRes] = await Promise.all([
-      supabase.from("teams").select("*").order("name"),
+      supabase.from("teams").select("*").eq("active", true).order("name"),
       supabase.from("players").select("*").order("name"),
       supabase.from("fixtures").select(`
         *,

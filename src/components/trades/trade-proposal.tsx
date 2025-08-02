@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowRightLeft, Users, MessageSquare, Send, Loader2, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 import type { Team, Player } from "@/lib/types/database"
 
 interface TradeProposalProps {
@@ -104,32 +105,36 @@ export function TradeProposal({ teamId, otherTeams }: TradeProposalProps) {
         .insert({
           from_team_id: teamId,
           to_team_id: selectedTeam,
-          notes
+          notes,
+          status: 'pending',
+          trade_type: 'standard'
         })
         .select()
         .single()
 
       if (tradeError) throw tradeError
 
-      // Add trade players
-      const tradePlayers = [
+      // Add trade items
+      const tradeItems = [
         ...selectedMyPlayers.map(playerId => ({
           trade_id: trade.id,
-          player_id: playerId,
-          direction: 'from' as const
+          item_type: 'player' as const,
+          from_team: true,
+          player_id: playerId
         })),
         ...selectedTheirPlayers.map(playerId => ({
           trade_id: trade.id,
-          player_id: playerId,
-          direction: 'to' as const
+          item_type: 'player' as const,
+          from_team: false,
+          player_id: playerId
         }))
       ]
 
-      const { error: playersError } = await supabase
-        .from("trade_players")
-        .insert(tradePlayers)
+      const { error: itemsError } = await supabase
+        .from("trade_items")
+        .insert(tradeItems)
 
-      if (playersError) throw playersError
+      if (itemsError) throw itemsError
 
       // Reset form
       setSelectedTeam("")
@@ -140,8 +145,10 @@ export function TradeProposal({ teamId, otherTeams }: TradeProposalProps) {
       setTheirPlayers([])
       
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating trade:", error)
+      const errorMessage = error?.message || error?.error?.message || "Failed to create trade"
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }

@@ -31,7 +31,7 @@ The QPCC 8-A-Side tournament has been enhanced with team balancing features to h
   - Real-time draft interface
 
 ### 4. Team Drops Handled
-- **Ready Freddie** and **Karcher** have been marked as dropped
+- Two teams have been dropped from the tournament
 - Their players are now in the supplemental draft pool
 - Remaining 6 teams can draft these players
 
@@ -94,7 +94,7 @@ The QPCC 8-A-Side tournament has been enhanced with team balancing features to h
 ## Next Steps
 
 1. Have all players complete skill voting
-2. Run the supplemental draft to distribute ex-Ready Freddie and Karcher players
+2. Run the supplemental draft to distribute players from dropped teams
 3. Generate fixtures for 6-team tournament
 4. Begin matches!
 

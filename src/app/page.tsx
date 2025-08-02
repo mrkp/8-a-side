@@ -6,17 +6,19 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Trophy, Users, Dribbble, Star, Medal, Award, Shield, CalendarIcon, BarChart3, Target } from "lucide-react"
 import { QPCCHeader } from "@/components/qpcc-header"
+import { TeamLogo } from "@/components/team-logo"
 
 export default async function Home() {
   const supabase = await createClient()
   
-  // Get all teams with their players and rankings
+  // Get all active teams with their players and rankings
   const { data: teams } = await supabase
     .from("teams")
     .select(`
       *,
       players(*)
     `)
+    .eq("active", true)
     .order("name")
 
   // Get recent trades
@@ -33,27 +35,12 @@ export default async function Home() {
 
   // Calculate statistics
   const totalPlayers = teams?.reduce((acc, team) => acc + team.players.length, 0) || 0
-  const rankedPlayers = teams?.reduce((acc, team) => 
-    acc + team.players.filter((p: any) => p.rank).length, 0) || 0
-  
-  const rankStats = teams?.reduce((acc, team) => {
-    team.players.forEach((player: any) => {
-      if (player.rank) {
-        acc[player.rank] = (acc[player.rank] || 0) + 1
-      }
-    })
-    return acc
-  }, {} as Record<string, number>) || {}
 
   // Sort teams alphabetically and organize player data
   const teamsWithPlayers = teams?.map(team => {
-    const sortedPlayers = [...team.players].sort((a: any, b: any) => {
-      const rankOrder = { 'A': 0, 'B': 1, 'C': 2 }
-      const aRank = a.rank ? rankOrder[a.rank as keyof typeof rankOrder] : 999
-      const bRank = b.rank ? rankOrder[b.rank as keyof typeof rankOrder] : 999
-      if (aRank !== bRank) return aRank - bRank
-      return a.name.localeCompare(b.name)
-    })
+    const sortedPlayers = [...team.players].sort((a: any, b: any) => 
+      a.name.localeCompare(b.name)
+    )
     
     return { ...team, players: sortedPlayers }
   }).sort((a, b) => a.name.localeCompare(b.name)) || []
@@ -64,13 +51,16 @@ export default async function Home() {
       <section className="border-b bg-background/50 backdrop-blur">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center space-y-6">
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <QPCCHeader />
+            <div className="flex items-center justify-center mb-8">
+              <img 
+                src="/8-a-side-logo.png" 
+                alt="QPCC 8-A-SIDE Football Tournament"
+                className="h-48 w-auto object-contain"
+              />
             </div>
             
-            <h1 className="text-5xl font-bold tracking-tight">
-              <span className="text-primary">QPCC</span> 8-A-SIDE
-              <span className="block text-3xl mt-2 text-muted-foreground">Football Tournament</span>
+            <h1 className="text-4xl font-bold tracking-tight">
+              <span className="block text-2xl text-muted-foreground">"Proud to be a Parkite"</span>
             </h1>
             
             <a 
@@ -112,6 +102,12 @@ export default async function Home() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
+                <Link href="/rosters">
+                  <Users className="mr-2 h-5 w-5" />
+                  Team Rosters
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
                 <Link href="/leaderboard">
                   <Target className="mr-2 h-5 w-5" />
                   Top Scorers
@@ -131,7 +127,7 @@ export default async function Home() {
       {/* Tournament Stats */}
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5 max-w-6xl mx-auto">
+          <div className="grid gap-6 md:grid-cols-2 max-w-2xl mx-auto">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Teams</CardTitle>
@@ -150,42 +146,7 @@ export default async function Home() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{totalPlayers}</div>
-                <p className="text-xs text-muted-foreground">
-                  {rankedPlayers} ranked ({totalPlayers > 0 ? Math.round((rankedPlayers / totalPlayers) * 100) : 0}%)
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">A-Grade</CardTitle>
-                <Star className="h-4 w-4 text-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{rankStats.A || 0}</div>
-                <p className="text-xs text-muted-foreground">Skilled players</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">B-Grade</CardTitle>
-                <Medal className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{rankStats.B || 0}</div>
-                <p className="text-xs text-muted-foreground">Competitive players</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">C-Grade</CardTitle>
-                <Award className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{rankStats.C || 0}</div>
-                <p className="text-xs text-muted-foreground">Recreational players</p>
+                <p className="text-xs text-muted-foreground">Active participants</p>
               </CardContent>
             </Card>
           </div>
@@ -209,20 +170,29 @@ export default async function Home() {
               {teamsWithPlayers.map(team => (
                 <Card key={team.id} className="overflow-hidden">
                   <CardHeader className="pb-3 bg-muted/30">
-                    <CardTitle className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Users className="h-5 w-5 text-muted-foreground" />
-                        {team.name}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <TeamLogo 
+                          src={team.logo} 
+                          alt={team.name} 
+                          size="sm"
+                        />
+                        <CardTitle className="text-base">{team.name}</CardTitle>
+                      </div>
                       <Badge variant="outline">{team.players.length}</Badge>
-                    </CardTitle>
+                    </div>
                   </CardHeader>
                   <CardContent className="pt-4">
                     <div className="space-y-2 max-h-80 overflow-y-auto">
                       {team.players.length > 0 ? (
                         team.players.map((player: any) => (
-                          <div key={player.id} className="flex items-center justify-between py-1">
-                            <span className="text-sm font-medium flex items-center gap-1">
+                          <div key={player.id} className="flex items-center py-1">
+                            <span className="text-sm font-medium flex items-center gap-1 w-full">
+                              {player.jersey_number && (
+                                <span className="text-xs text-muted-foreground font-mono w-6">
+                                  #{player.jersey_number}
+                                </span>
+                              )}
                               {player.name}
                               {player.is_captain && (
                                 <span 
@@ -238,23 +208,6 @@ export default async function Home() {
                                 </span>
                               )}
                             </span>
-                            {player.rank ? (
-                              player.rank === 'A' ? (
-                                <Badge variant="destructive" className="text-xs">
-                                  <Star className="w-3 h-3 mr-1" />A
-                                </Badge>
-                              ) : player.rank === 'B' ? (
-                                <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
-                                  <Medal className="w-3 h-3 mr-1" />B
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
-                                  <Award className="w-3 h-3 mr-1" />C
-                                </Badge>
-                              )
-                            ) : (
-                              <span className="text-xs text-muted-foreground">Unranked</span>
-                            )}
                           </div>
                         ))
                       ) : (

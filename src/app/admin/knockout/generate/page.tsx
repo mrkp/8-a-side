@@ -38,6 +38,7 @@ export default function GenerateKnockoutPage() {
     const { data } = await supabase
       .from("teams")
       .select("*")
+      .eq("active", true)
       .order("group")
 
     if (data) {

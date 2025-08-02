@@ -19,10 +19,11 @@ import {
 export default async function StandingsPage() {
   const supabase = await createClient()
 
-  // Get all teams with their stats
+  // Get all active teams with their stats
   const { data: teams } = await supabase
     .from("teams")
     .select("*")
+    .eq("active", true)
     .order("name")
 
   // Group teams by division/group

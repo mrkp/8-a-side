@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, Clock, MapPin } from "lucide-react"
 import { format } from "date-fns"
+import { formatTimeInTimezone, formatDateInTimezone } from "@/utils/date-helpers"
 import Link from "next/link"
 
 export default async function FixturesContent() {
@@ -116,7 +117,7 @@ function FixtureCard({ fixture }: { fixture: any }) {
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <span>{format(new Date(fixture.date), 'h:mm a')}</span>
+                <span>{formatTimeInTimezone(fixture.date)}</span>
               </div>
             </div>
           )}

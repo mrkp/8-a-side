@@ -11,13 +11,14 @@ import Link from "next/link"
 export default async function TournamentPage() {
   const supabase = await createClient()
 
-  // Get all teams with their players
+  // Get all active teams with their players
   const { data: teams } = await supabase
     .from("teams")
     .select(`
       *,
       players(*)
     `)
+    .eq("active", true)
     .order("name")
 
   // Get trade statistics

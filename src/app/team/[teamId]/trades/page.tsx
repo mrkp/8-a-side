@@ -26,6 +26,7 @@ export default async function TeamTradesPage({
     .from("teams")
     .select("*")
     .neq("id", resolvedParams.teamId)
+    .eq("active", true)
     .order("name")
 
   // Get pending trades involving this team
