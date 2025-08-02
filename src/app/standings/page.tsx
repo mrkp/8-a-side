@@ -1,7 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Trophy, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -26,29 +25,22 @@ export default async function StandingsPage() {
     .eq("active", true)
     .order("name")
 
-  // Group teams by division/group
-  const groupA = teams?.filter(t => t.group === 'A') || []
-  const groupB = teams?.filter(t => t.group === 'B') || []
-  const allTeams = teams || []
-
   // Sort teams by points, then goal difference, then goals for
-  const sortTeams = (teams: any[]) => {
-    return teams.sort((a, b) => {
-      const statsA = a.stats || { points: 0, gd: 0, gf: 0 }
-      const statsB = b.stats || { points: 0, gd: 0, gf: 0 }
-      
-      // First by points
-      if (statsB.points !== statsA.points) {
-        return statsB.points - statsA.points
-      }
-      // Then by goal difference
-      if (statsB.gd !== statsA.gd) {
-        return statsB.gd - statsA.gd
-      }
-      // Then by goals for
-      return statsB.gf - statsA.gf
-    })
-  }
+  const sortedTeams = teams?.sort((a, b) => {
+    const statsA = a.stats || { points: 0, gd: 0, gf: 0 }
+    const statsB = b.stats || { points: 0, gd: 0, gf: 0 }
+    
+    // First by points
+    if (statsB.points !== statsA.points) {
+      return statsB.points - statsA.points
+    }
+    // Then by goal difference
+    if (statsB.gd !== statsA.gd) {
+      return statsB.gd - statsA.gd
+    }
+    // Then by goals for
+    return statsB.gf - statsA.gf
+  }) || []
 
   return (
     <div className="min-h-screen bg-background">
@@ -90,25 +82,7 @@ export default async function StandingsPage() {
             </p>
           </div>
 
-          <Tabs defaultValue="all" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
-              <TabsTrigger value="all">All Teams</TabsTrigger>
-              <TabsTrigger value="groupA">Group A</TabsTrigger>
-              <TabsTrigger value="groupB">Group B</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all">
-              <StandingsTable teams={sortTeams(allTeams)} showGroup />
-            </TabsContent>
-
-            <TabsContent value="groupA">
-              <StandingsTable teams={sortTeams(groupA)} />
-            </TabsContent>
-
-            <TabsContent value="groupB">
-              <StandingsTable teams={sortTeams(groupB)} />
-            </TabsContent>
-          </Tabs>
+          <StandingsTable teams={sortedTeams} />
 
           <Card className="mt-8">
             <CardHeader>
@@ -133,7 +107,7 @@ export default async function StandingsPage() {
   )
 }
 
-function StandingsTable({ teams, showGroup = false }: { teams: any[], showGroup?: boolean }) {
+function StandingsTable({ teams }: { teams: any[] }) {
   return (
     <Card>
       <Table>
@@ -141,7 +115,6 @@ function StandingsTable({ teams, showGroup = false }: { teams: any[], showGroup?
           <TableRow>
             <TableHead className="w-12">#</TableHead>
             <TableHead>Team</TableHead>
-            {showGroup && <TableHead className="text-center">Group</TableHead>}
             <TableHead className="text-center">P</TableHead>
             <TableHead className="text-center">W</TableHead>
             <TableHead className="text-center">D</TableHead>
@@ -186,11 +159,6 @@ function StandingsTable({ teams, showGroup = false }: { teams: any[], showGroup?
                     {team.name}
                   </Link>
                 </TableCell>
-                {showGroup && (
-                  <TableCell className="text-center">
-                    <Badge variant="outline">{team.group || '-'}</Badge>
-                  </TableCell>
-                )}
                 <TableCell className="text-center">{stats.played}</TableCell>
                 <TableCell className="text-center text-green-600 font-medium">{stats.won}</TableCell>
                 <TableCell className="text-center text-yellow-600 font-medium">{stats.drawn}</TableCell>

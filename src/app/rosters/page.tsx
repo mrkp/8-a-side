@@ -24,12 +24,7 @@ export default async function RostersPage() {
   // Sort teams and organize player data
   const teamsWithPlayers = teams?.map(team => {
     const sortedPlayers = [...team.players].sort((a: any, b: any) => {
-      // Sort by jersey number first, then by name
-      if (a.jersey_number && b.jersey_number) {
-        return a.jersey_number - b.jersey_number
-      }
-      if (a.jersey_number) return -1
-      if (b.jersey_number) return 1
+      // Sort alphabetically by name
       return a.name.localeCompare(b.name)
     })
     

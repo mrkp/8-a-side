@@ -12,6 +12,7 @@ interface ScoreboardClientProps {
 export function ScoreboardClient({ fixtureId }: ScoreboardClientProps) {
   const [elapsedTime, setElapsedTime] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
+  const [lastCelebratedGoalId, setLastCelebratedGoalId] = useState<string | null>(null)
   const [celebrationData, setCelebrationData] = useState<{
     show: boolean
     playerName: string
@@ -34,51 +35,20 @@ export function ScoreboardClient({ fixtureId }: ScoreboardClientProps) {
   const { fixture, events, isConnected, lastGoal } = useRealtimeFixture({ fixtureId })
   const [previousScore, setPreviousScore] = useState<{ teamA: number; teamB: number } | null>(null)
 
-  // Handle score changes
+  // Handle score changes - removed since we rely on lastGoal mechanism
   useEffect(() => {
-    if (fixture?.score && previousScore) {
-      const scoreChanged = 
-        fixture.score.teamA !== previousScore.teamA || 
-        fixture.score.teamB !== previousScore.teamB
-      
-      if (scoreChanged) {
-        console.log('Score changed! Previous:', previousScore, 'New:', fixture.score)
-        
-        // Find the most recent goal event
-        const mostRecentGoal = events.find(e => e.type === 'goal')
-        
-        if (mostRecentGoal && mostRecentGoal.player) {
-          console.log('Triggering celebration for:', mostRecentGoal.player.name)
-          setCelebrationData({
-            show: true,
-            playerName: mostRecentGoal.player.name,
-            playerImage: mostRecentGoal.player.image_url,
-            assistName: mostRecentGoal.assist_player?.name,
-            assistImage: mostRecentGoal.assist_player?.image_url,
-            teamName: mostRecentGoal.team.name,
-            rank: mostRecentGoal.player.rank
-          })
-          
-          // Auto-hide after 10 seconds
-          setTimeout(() => {
-            console.log('Hiding celebration')
-            setCelebrationData(prev => ({ ...prev, show: false }))
-          }, 10000)
-        }
-      }
-    }
-    
-    // Update previous score
+    // Just update previous score for tracking
     if (fixture?.score) {
       setPreviousScore(fixture.score)
     }
-  }, [fixture?.score, events])
+  }, [fixture?.score])
 
-  // Also handle lastGoal from real-time events
+  // Handle lastGoal from real-time events
   useEffect(() => {
     console.log('Goal celebration effect triggered, lastGoal:', lastGoal)
-    if (lastGoal && lastGoal.player) {
+    if (lastGoal && lastGoal.player && lastGoal.id !== lastCelebratedGoalId) {
       console.log('Setting celebration data for player:', lastGoal.player.name)
+      setLastCelebratedGoalId(lastGoal.id)
       setCelebrationData({
         show: true,
         playerName: lastGoal.player.name,
@@ -97,7 +67,7 @@ export function ScoreboardClient({ fixtureId }: ScoreboardClientProps) {
       
       return () => clearTimeout(timer)
     }
-  }, [lastGoal])
+  }, [lastGoal, lastCelebratedGoalId])
 
   useEffect(() => {
     // Update timer based on match status

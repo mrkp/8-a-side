@@ -43,13 +43,8 @@ export default async function TeamRosterPage({ params }: { params: Promise<{ tea
     notFound()
   }
 
-  // Sort players by jersey number
+  // Sort players alphabetically by name
   const sortedPlayers = [...teamData.players].sort((a: any, b: any) => {
-    if (a.jersey_number && b.jersey_number) {
-      return a.jersey_number - b.jersey_number
-    }
-    if (a.jersey_number) return -1
-    if (b.jersey_number) return 1
     return a.name.localeCompare(b.name)
   })
 
