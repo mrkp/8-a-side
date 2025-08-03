@@ -3,8 +3,15 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { CalendarIcon, Trophy, Users, BarChart3 } from "lucide-react"
+import { CalendarIcon, Trophy, Users, BarChart3, Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 
 export function HomePageClient({ children }: { children: React.ReactNode }) {
   const [showHeader, setShowHeader] = useState(false)
@@ -40,7 +47,8 @@ export function HomePageClient({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
             
-            <nav className="flex items-center gap-2">
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/fixtures">
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -66,6 +74,47 @@ export function HomePageClient({ children }: { children: React.ReactNode }) {
                 </Link>
               </Button>
             </nav>
+
+            {/* Mobile Navigation */}
+            <Sheet>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <SheetHeader>
+                  <SheetTitle>Navigation</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-4 mt-6">
+                  <Button variant="ghost" className="justify-start" asChild>
+                    <Link href="/fixtures">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Fixtures
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="justify-start" asChild>
+                    <Link href="/standings">
+                      <Trophy className="mr-2 h-4 w-4" />
+                      Standings
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="justify-start" asChild>
+                    <Link href="/tournament">
+                      <Users className="mr-2 h-4 w-4" />
+                      Team Rosters
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" className="justify-start" asChild>
+                    <Link href="/leaderboard">
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Statistics
+                    </Link>
+                  </Button>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

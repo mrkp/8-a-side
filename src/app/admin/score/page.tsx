@@ -181,13 +181,14 @@ export default function ScorePage() {
       .from("fixtures")
       .update({ 
         status: "live",
-        started_at: new Date().toISOString()
+        started_at: new Date().toISOString(),
+        current_half: 1
       })
       .eq("id", selectedFixture.id)
 
     if (!error) {
       const now = new Date().toISOString()
-      setSelectedFixture({ ...selectedFixture, status: "live", started_at: now })
+      setSelectedFixture({ ...selectedFixture, status: "live", started_at: now, current_half: 1 })
       setMatchStartTime(new Date(now))
       toast.success("Match started!")
     }
@@ -211,7 +212,8 @@ export default function ScorePage() {
   }
   
   const callHalfTime = async () => {
-    if (!selectedFixture || selectedFixture.current_half !== 1) return
+    if (!selectedFixture) return
+    if (selectedFixture.current_half === 2) return // Already in second half
     
     const elapsedSeconds = getElapsedSeconds()
     if (elapsedSeconds < 1200) { // Less than 20 minutes
@@ -238,7 +240,8 @@ export default function ScorePage() {
   }
   
   const startSecondHalf = async () => {
-    if (!selectedFixture || selectedFixture.current_half !== 1) return
+    if (!selectedFixture) return
+    if (selectedFixture.current_half === 2) return // Already in second half
     
     const { error } = await supabase
       .from("fixtures")

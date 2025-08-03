@@ -1,6 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // Only check admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    // Allow access to login page
+    if (request.nextUrl.pathname === '/admin/login') {
+      return NextResponse.next()
+    }
+
+    // Check for auth in cookies
+    const isAuthenticated = request.cookies.get('adminAuth')?.value === 'true'
+    
+    if (!isAuthenticated) {
+      // Redirect to login page
+      const loginUrl = new URL('/admin/login', request.url)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
+
   return NextResponse.next()
 }
 
